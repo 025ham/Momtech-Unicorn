@@ -2,13 +2,13 @@
 ## หน้าจอของแอปพลิเคชัน (จาก Figma)
 
 ### 1. Home 
-* [ ]  **Header:** แสดงการต้อนรับข้อมูลสัปดาห์การตั้งครรภ์ (e.g., Week 38 Pregnancy) และปุ่มแจ้งเตือน
+* [x]  **Header:** แสดงการต้อนรับข้อมูลสัปดาห์การตั้งครรภ์ (e.g., Week 38 Pregnancy) และปุ่มแจ้งเตือน
 
-* [ ]  **Device Status:** แถบแสดงสถานะการเชื่อมต่อของแผ่นแปะ (Momentum Patch, Battery, Bluetooth)
+* [x]  **Device Status:** แถบแสดงสถานะการเชื่อมต่อของแผ่นแปะ (Momentum Patch, Battery, Bluetooth)
 
-* [ ]  **Today's Health:** สรุปค่าสัญญาณชีพวันนี้ (Heart Rate, Baby Movement, Temperature, Stress)
+* [x]  **Today's Health:** สรุปค่าสัญญาณชีพวันนี้ (Heart Rate, Baby Movement, Temperature, Stress)
 
-* [ ]  **AI Health Score & Recommendation:** คะแนนสุขภาพภาพรวม และคำแนะนำเบื้องต้นจาก AI
+* [x]  **AI Health Score & Recommendation:** คะแนนสุขภาพภาพรวม และคำแนะนำเบื้องต้นจาก AI
 
 * [ ]  **Quick Action & Navigation:** ปุ่มลัดสำหรับเข้าถึงเมนูสำคัญ และ Bottom Navigation Bar
 
