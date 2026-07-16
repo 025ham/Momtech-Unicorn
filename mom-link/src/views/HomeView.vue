@@ -14,6 +14,7 @@ const healthMetrics = ref({
   stress: 'Low',
   healthScore: 97,
 })
+
 // ตัวแปรและฟังก์ชันสำหรับระบบ Click & Drag to Scroll
 const scrollContainer = ref(null)
 let isDown = false
@@ -23,7 +24,6 @@ let scrollTop
 const handleMouseDown = (e) => {
   isDown = true
   scrollContainer.value.classList.add('active-drag')
-  // e.pageY คือตำแหน่งเมาส์แนวตั้ง - ค่า offset ด้านบนของกล่อง
   startY = e.pageY - scrollContainer.value.offsetTop
   scrollTop = scrollContainer.value.scrollTop
 }
@@ -42,7 +42,6 @@ const handleMouseMove = (e) => {
   if (!isDown) return
   e.preventDefault()
   const y = e.pageY - scrollContainer.value.offsetTop
-  // คำนวณระยะทางที่ลาก (คูณ 1.5 หรือ 2 เพื่อเพิ่มความเร็วในการปัดได้)
   const walk = (y - startY) * 1.5
   scrollContainer.value.scrollTop = scrollTop - walk
 }
@@ -57,7 +56,6 @@ const handleMouseMove = (e) => {
     @mouseup="handleMouseUp"
     @mousemove="handleMouseMove"
   >
-    <!-- Header -->
     <header class="app-header">
       <div class="user-profile">
         <span class="avatar">👋</span>
@@ -72,7 +70,6 @@ const handleMouseMove = (e) => {
       </div>
     </header>
 
-    <!-- Momentum Patch Status -->
     <section class="momentum-patch-card">
       <div class="card-title">Momentum Patch</div>
       <div class="patch-grid">
@@ -100,7 +97,6 @@ const handleMouseMove = (e) => {
       </div>
     </section>
 
-    <!-- Today's Health Grid -->
     <section class="section-container">
       <h2 class="section-title">Today's Health</h2>
       <div class="metrics-grid">
@@ -108,10 +104,10 @@ const handleMouseMove = (e) => {
           <span class="m-icon">❤️</span>
           <div class="m-content">
             <span class="m-label">Heart Rate</span>
-            <span class="m-value"
-              >{{ healthMetrics.heartRate }} <small>bpm</small> ,
-              <span class="txt-green">Normal</span></span
-            >
+            <span class="m-value">
+              {{ healthMetrics.heartRate }} <small>bpm</small> ,
+              <span class="txt-green">Normal</span>
+            </span>
           </div>
         </div>
         <div class="metric-card bg-blue">
@@ -138,7 +134,6 @@ const handleMouseMove = (e) => {
       </div>
     </section>
 
-    <!-- Summary , AI Health Score -->
     <div class="dual-row">
       <div class="summary-card">
         <h3>Today's Summary</h3>
@@ -163,7 +158,6 @@ const handleMouseMove = (e) => {
       </div>
     </div>
 
-    <!-- AI Recommendation -->
     <section class="recommendation-card">
       <h3>AI Recommendation</h3>
       <div class="rec-grid">
@@ -175,7 +169,18 @@ const handleMouseMove = (e) => {
       <button class="view-more">View More</button>
     </section>
 
-    <!-- Bottom Navigation Bar -->
+    <section class="section-container">
+      <h2 class="section-title">Quick Action</h2>
+      <div class="action-grid">
+        <button class="act-btn btn-mint"><span class="act-icon">📈</span> Live Monitor</button>
+        <button class="act-btn btn-purple"><span class="act-icon">😊</span> AI Analysis</button>
+        <button class="act-btn btn-peach"><span class="act-icon">📄</span> Report</button>
+        <button class="act-btn btn-rose text-danger">
+          <span class="act-icon">⚠️</span> Emergency
+        </button>
+      </div>
+    </section>
+
     <nav class="bottom-nav">
       <button class="nav-item active">
         <span class="nav-icon">🏠</span>
@@ -194,22 +199,11 @@ const handleMouseMove = (e) => {
         <span class="nav-label">Profile</span>
       </button>
     </nav>
-    <!-- Quick Action -->
-    <section class="section-container">
-      <h2 class="section-title">Quick Action</h2>
-      <div class="action-grid">
-        <button class="act-btn btn-mint"><span class="act-icon">📈</span> Live Monitor</button>
-        <button class="act-btn btn-purple"><span class="act-icon">😊</span> AI Analysis</button>
-        <button class="act-btn btn-peach"><span class="act-icon">📄</span> Report</button>
-        <button class="act-btn btn-rose text-danger">
-          <span class="act-icon">⚠️</span> Emergency
-        </button>
-      </div>
-    </section>
   </div>
 </template>
 
 <style scoped>
+/* CSS คงเดิมตามที่คุณเขียนไว้ได้เลยครับ... */
 .home-view {
   background-color: #fcf8f2;
   flex: 1;
@@ -290,7 +284,7 @@ const handleMouseMove = (e) => {
 .momentum-patch-card {
   background-color: #b9ded2;
   border-radius: 20px;
-  padding: 12px 0;
+  padding: 14px 0 0 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 .card-title {
@@ -496,10 +490,13 @@ const handleMouseMove = (e) => {
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
+.act-icon{
+  font-size: 20px;
+}
 .act-btn {
   border: none;
   border-radius: 16px;
-  padding: 12px 4px;
+  padding: 15px 7px;
   font-size: 10px;
   font-weight: bold;
   display: flex;
