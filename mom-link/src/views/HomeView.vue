@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
-
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const deviceStatus = ref({
   connected: true,
   battery: 92,
@@ -15,7 +16,7 @@ const healthMetrics = ref({
   healthScore: 97,
 })
 
-// ตัวแปรและฟังก์ชันสำหรับระบบ Click & Drag to Scroll
+// ระบบ Click , Drag 
 const scrollContainer = ref(null)
 let isDown = false
 let startY
@@ -186,7 +187,7 @@ const handleMouseMove = (e) => {
         <span class="nav-icon">🏠</span>
         <span class="nav-label">Home</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" @click="router.push('/monitor')">
         <span class="nav-icon">📈</span>
         <span class="nav-label">Monitor</span>
       </button>
@@ -206,14 +207,14 @@ const handleMouseMove = (e) => {
 /* CSS คงเดิมตามที่คุณเขียนไว้ได้เลยครับ... */
 .home-view {
   background-color: #fcf8f2;
-  flex: 1;
-  overflow-y: auto;
+  width: 100%; /* ยืดเต็มกรอบ */
+  height: 100%; /* ยืดเต็มกรอบ */
+  overflow-y: auto; 
   padding: 16px;
-  padding-bottom: 100px;
+  padding-bottom: 110px; /* เว้นระยะหลบ Bottom Nav */
   display: flex;
   flex-direction: column;
   gap: 16px;
-  height: 100%;
   cursor: grab;
   user-select: none;
 }
@@ -290,7 +291,7 @@ const handleMouseMove = (e) => {
 .card-title {
   text-align: center;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 17px;
   color: #1a302a;
   margin-bottom: 12px;
 }
@@ -368,9 +369,9 @@ const handleMouseMove = (e) => {
   flex-direction: column;
 }
 .m-label {
-  font-size: 12px;
+  font-size: 15px;
   color: #333;
-  font-weight: 500;
+  font-weight: bolder;
 }
 .m-value {
   font-size: 13px;
@@ -401,13 +402,13 @@ const handleMouseMove = (e) => {
 }
 .summary-card h3,
 .score-card h3 {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: bold;
   margin-bottom: 8px;
 }
 .summary-card ul {
   padding-left: 14px;
-  font-size: 11px;
+  font-size: 13px;
   color: #444;
   line-height: 1.5;
 }
