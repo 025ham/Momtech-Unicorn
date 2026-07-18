@@ -15,9 +15,9 @@
 ### 2. Live Monitor 
 * [ ]  **Heart Rate Graph:** กราฟแสดงอัตราการเต้นของหัวใจแบบเรียลไทม์
 
-* [ ]  **Baby Movement Counter:** ตัวนับจำนวนการดิ้นของทารกในครรภ์ และ Timeline เวลาที่ดิ้นล่าสุด
+* [x]  **Baby Movement Counter:** ตัวนับจำนวนการดิ้นของทารกในครรภ์ และ Timeline เวลาที่ดิ้นล่าสุด
 
-* [ ]  **Metrics:** การ์ดแสดงผลอุณหภูมิร่างกาย และระดับความเครียด (Stress Level) พร้อมปุ่ม Refresh/Export ข้อมูล
+* [x]  **Metrics:** การ์ดแสดงผลอุณหภูมิร่างกาย และระดับความเครียด (Stress Level) พร้อมปุ่ม Refresh/Export ข้อมูล
 
 ### 3. AI Analysis 
 * [ ]  **Health Score & Risk Gauge:** หน้าปัดแสดงระดับความเสี่ยง (Risk Level) และคะแนนสุขภาพ 97%
