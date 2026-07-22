@@ -15,24 +15,32 @@ import { RouterView } from 'vue-router'
   padding: 0;
 }
 
-body {
+html, body {
   background-color: #e5e5e5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
 }
+
+body {
+  display: flex;
+  justify-content: center;
+}
+
 .phone-wrapper {
-  width: 100%;
-  max-width: 430px; 
-  height: 100vh;
-  max-height: 850px; 
+  width: 430px;
+  min-height: 100vh;
   background-color: #fcf8f2;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   position: relative;
   border-radius: 40px;
-  overflow: hidden; 
+  overflow-x: hidden;
+}
+
+@media (max-width: 430px) {
+  .phone-wrapper {
+    width: 100%;
+    border-radius: 0;
+  }
 }
 </style>

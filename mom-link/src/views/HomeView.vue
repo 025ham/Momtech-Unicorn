@@ -1,22 +1,12 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useHealthStore } from '@/stores/health'
+
 const router = useRouter()
-const deviceStatus = ref({
-  connected: true,
-  battery: 92,
-  bluetooth: 'Strong',
-})
+const healthStore = useHealthStore()
 
-const healthMetrics = ref({
-  heartRate: 145,
-  babyMovement: 18,
-  temperature: 36.8,
-  stress: 'Low',
-  healthScore: 97,
-})
-
-// ระบบ Click , Drag 
+// ระบบ Click , Drag
 const scrollContainer = ref(null)
 let isDown = false
 let startY
@@ -85,14 +75,14 @@ const handleMouseMove = (e) => {
           <span class="p-icon">🔋</span>
           <div class="p-info">
             <span class="p-label">Battery :</span>
-            <span class="p-value">{{ deviceStatus.battery }}%</span>
+            <span class="p-value">92%</span>
           </div>
         </div>
         <div class="patch-item">
           <span class="p-icon">📶</span>
           <div class="p-info">
             <span class="p-label">Bluetooth :</span>
-            <span class="p-value status-active">{{ deviceStatus.bluetooth }}</span>
+            <span class="p-value status-active">Strong</span>
           </div>
         </div>
       </div>
@@ -106,7 +96,7 @@ const handleMouseMove = (e) => {
           <div class="m-content">
             <span class="m-label">Heart Rate</span>
             <span class="m-value">
-              {{ healthMetrics.heartRate }} <small>bpm</small> ,
+              {{ healthStore.metrics.heartRate }} <small>bpm</small> ,
               <span class="txt-green">Normal</span>
             </span>
           </div>
@@ -115,21 +105,21 @@ const handleMouseMove = (e) => {
           <span class="m-icon">👶</span>
           <div class="m-content">
             <span class="m-label">Baby Movement</span>
-            <span class="m-value">{{ healthMetrics.babyMovement }} <small>Time/Today</small></span>
+            <span class="m-value">{{ healthStore.metrics.babyMovement }} <small>Time/Today</small></span>
           </div>
         </div>
         <div class="metric-card bg-orange">
           <span class="m-icon">🌡️</span>
           <div class="m-content">
             <span class="m-label">Temperature</span>
-            <span class="m-value">{{ healthMetrics.temperature }}°C</span>
+            <span class="m-value">{{ healthStore.metrics.temperature }}°C</span>
           </div>
         </div>
         <div class="metric-card bg-green-light">
           <span class="m-icon">🙂</span>
           <div class="m-content">
             <span class="m-label">Stress</span>
-            <span class="m-value txt-green">{{ healthMetrics.stress }}</span>
+            <span class="m-value txt-green">{{ healthStore.metrics.stressLevel }}</span>
           </div>
         </div>
       </div>
@@ -151,7 +141,7 @@ const handleMouseMove = (e) => {
         <div class="gauge-container">
           <div class="gauge-arc">
             <div class="gauge-inner">
-              <span class="score-val">{{ healthMetrics.healthScore }}%</span>
+              <span class="score-val">{{ healthStore.metrics.healthScore }}%</span>
             </div>
           </div>
           <span class="score-status">Excellent</span>
@@ -173,10 +163,10 @@ const handleMouseMove = (e) => {
     <section class="section-container">
       <h2 class="section-title">Quick Action</h2>
       <div class="action-grid">
-        <button class="act-btn btn-mint"><span class="act-icon">📈</span> Live Monitor</button>
-        <button class="act-btn btn-purple"><span class="act-icon">😊</span> AI Analysis</button>
-        <button class="act-btn btn-peach"><span class="act-icon">📄</span> Report</button>
-        <button class="act-btn btn-rose text-danger">
+        <button class="act-btn btn-mint" @click="router.push('/monitor')"><span class="act-icon">📈</span> Live Monitor</button>
+        <button class="act-btn btn-purple" @click="router.push('/ai-analysis')"><span class="act-icon">😊</span> AI Analysis</button>
+        <button class="act-btn btn-peach" @click="router.push('/health-report')"><span class="act-icon">📄</span> Report</button>
+        <button class="act-btn btn-rose text-danger" @click="router.push('/emergency')">
           <span class="act-icon">⚠️</span> Emergency
         </button>
       </div>
@@ -191,11 +181,11 @@ const handleMouseMove = (e) => {
         <span class="nav-icon">📈</span>
         <span class="nav-label">Monitor</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" @click="router.push('/ai-analysis')">
         <span class="nav-icon">😊</span>
         <span class="nav-label">AI Analysis</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" @click="router.push('/profile')">
         <span class="nav-icon">👤</span>
         <span class="nav-label">Profile</span>
       </button>
@@ -235,7 +225,10 @@ const handleMouseMove = (e) => {
   border-radius: 24px;
   margin: -16px -16px 0 -16px;
   position: sticky;
+  top: -16px;
   z-index: 10;
+  width: calc(100% + 32px);
+  box-sizing: border-box;
 }
 .user-profile {
   display: flex;

@@ -1,26 +1,96 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useHealthStore } from '@/stores/health'
 
 const router = useRouter()
+const healthStore = useHealthStore()
 const scrollContainer = ref(null)
 
 const goBack = () => {
   router.push('/')
 }
 
-// Mock Data naja
-const heartRate = ref(145)
-const movementCurrent = ref(18)
-const movementTarget = ref(20)
-const temperature = ref(36.8)
-const stressLevel = ref('Low')
+// Mock Data
+const heartRate = computed(() => healthStore.metrics.heartRate)
+const movementCurrent = computed(() => healthStore.metrics.babyMovement)
+const movementTarget = computed(() => healthStore.metrics.movementTarget)
+const temperature = computed(() => healthStore.metrics.temperature)
+const stressLevel = computed(() => healthStore.metrics.stressLevel)
 
 const timelineEvents = ref([
   { time: '17:00', type: 'pink', active: false },
   { time: '17:30', type: 'blue', active: true },
   { time: '18:20', type: 'pink', active: false }
 ])
+
+// Heart Rate Graph Data - simulated real-time
+const heartRateData = computed(() => healthStore.metrics.heartRateHistory)
+const maxHR = 180
+const minHR = 60
+const graphPoints = computed(() => {
+  const width = 300
+  const height = 120
+  const padding = 10
+  const data = heartRateData.value
+  const stepX = (width - padding * 2) / (data.length - 1)
+
+  return data.map((val, i) => {
+    const x = padding + i * stepX
+    const y = height - padding - ((val - minHR) / (maxHR - minHR)) * (height - padding * 2)
+    return { x, y, val }
+  })
+})
+
+// Generate smooth SVG path
+const linePath = computed(() => {
+  const pts = graphPoints.value
+  if (pts.length < 2) return ''
+  let d = `M ${pts[0].x} ${pts[0].y}`
+  for (let i = 1; i < pts.length; i++) {
+    const prev = pts[i - 1]
+    const curr = pts[i]
+    const cpx = (prev.x + curr.x) / 2
+    d += ` Q ${cpx} ${prev.y} ${cpx} ${(prev.y + curr.y) / 2}`
+    d += ` Q ${cpx} ${curr.y} ${curr.x} ${curr.y}`
+  }
+  return d
+})
+
+// Area fill path
+const areaPath = computed(() => {
+  const pts = graphPoints.value
+  if (pts.length < 2) return ''
+  const height = 120
+  const padding = 10
+  let d = `M ${pts[0].x} ${height - padding}`
+  d += ` L ${pts[0].x} ${pts[0].y}`
+  for (let i = 1; i < pts.length; i++) {
+    const prev = pts[i - 1]
+    const curr = pts[i]
+    const cpx = (prev.x + curr.x) / 2
+    d += ` Q ${cpx} ${prev.y} ${cpx} ${(prev.y + curr.y) / 2}`
+    d += ` Q ${cpx} ${curr.y} ${curr.x} ${curr.y}`
+  }
+  d += ` L ${pts[pts.length - 1].x} ${height - padding} Z`
+  return d
+})
+
+// Simulate real-time heart rate update
+let intervalId = null
+const currentHR = ref(145)
+onMounted(() => {
+  intervalId = setInterval(() => {
+    // Simulate small fluctuations
+    const baseHR = 140 + Math.floor(Math.random() * 15) - 7
+    currentHR.value = baseHR
+    // Update store
+    healthStore.addHeartRateReading(baseHR)
+  }, 2000)
+})
+onUnmounted(() => {
+  if (intervalId) clearInterval(intervalId)
+})
 
 
 let isDown = false
@@ -67,10 +137,47 @@ const handleMouseMove = (e) => {
       </div>
 
       <div class="graph-placeholder">
-        <div class="mock-graph">
-          <div class="grid-lines"></div>
-          <div class="mock-line"> *Heart Rate Graph Trace*</div>
-        </div>
+        <svg viewBox="0 0 300 120" class="hr-graph" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="hrGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#d9534f" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#d9534f" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid lines -->
+          <line x1="10" y1="20" x2="290" y2="20" class="grid-line" />
+          <line x1="10" y1="40" x2="290" y2="40" class="grid-line" />
+          <line x1="10" y1="60" x2="290" y2="60" class="grid-line" />
+          <line x1="10" y1="80" x2="290" y2="80" class="grid-line" />
+          <line x1="10" y1="100" x2="290" y2="100" class="grid-line" />
+
+          <!-- Y-axis labels -->
+          <text x="5" y="24" class="graph-label">180</text>
+          <text x="5" y="44" class="graph-label">150</text>
+          <text x="5" y="64" class="graph-label">120</text>
+          <text x="5" y="84" class="graph-label">90</text>
+          <text x="5" y="104" class="graph-label">60</text>
+
+          <!-- Area fill -->
+          <path :d="areaPath" class="graph-area" />
+
+          <!-- Main line -->
+          <path :d="linePath" class="graph-line" />
+
+          <!-- Data points -->
+          <circle
+            v-for="(pt, i) in graphPoints"
+            :key="i"
+            :cx="pt.x"
+            :cy="pt.y"
+            r="3"
+            class="data-dot"
+          />
+
+          <!-- Current value indicator -->
+          <rect x="260" y="5" width="35" height="18" rx="8" class="current-badge-bg" />
+          <text x="277" y="17" class="current-badge-text">{{ currentHR }}</text>
+        </svg>
       </div>
     </section>
 
@@ -135,11 +242,11 @@ const handleMouseMove = (e) => {
         <span class="nav-icon">📈</span>
         <span class="nav-label">Monitor</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" @click="router.push('/ai-analysis')">
         <span class="nav-icon">😊</span>
         <span class="nav-label">AI Analysis</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" @click="router.push('/profile')">
         <span class="nav-icon">👤</span>
         <span class="nav-label">Profile</span>
       </button>
@@ -172,11 +279,13 @@ const handleMouseMove = (e) => {
   background-color: #d1ebd9;
   padding: 16px;
   border-radius: 24px;
-  margin: -16px -16px 0 -16px; 
+  margin: -16px -16px 0 -16px;
   position: sticky;
   top: -16px;
   z-index: 10;
-  width: 385px;
+  /* Stretch beyond container using negative margin + full width */
+  width: calc(100% + 32px);
+  box-sizing: border-box;
 }
 .back-btn {
   background: none;
@@ -214,18 +323,52 @@ const handleMouseMove = (e) => {
   font-size: 13px;
   margin-bottom: 10px;
 }
+.title { font-size: 13px; font-weight: bold; }
 .value { font-size: 14px; }
 .icon-red { color: #d9534f; }
 .graph-placeholder {
   background: #fff8f8;
   border: 1px solid #fcdcdb;
   border-radius: 12px;
-  height: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #d9534f;
-  font-size: 12px;
+  height: 140px;
+  overflow: hidden;
+}
+
+/* Heart Rate Graph */
+.hr-graph {
+  width: 100%;
+  height: 100%;
+}
+.grid-line {
+  stroke: #fcdcdb;
+  stroke-width: 1;
+}
+.graph-label {
+  font-size: 8px;
+  fill: #aaa;
+}
+.graph-area {
+  fill: url(#hrGradient);
+  opacity: 0.4;
+}
+.graph-line {
+  fill: none;
+  stroke: #d9534f;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.data-dot {
+  fill: #d9534f;
+}
+.current-badge-bg {
+  fill: #d9534f;
+}
+.current-badge-text {
+  font-size: 9px;
+  fill: white;
+  font-weight: bold;
+  text-anchor: middle;
 }
 
 /* Layout Row */
