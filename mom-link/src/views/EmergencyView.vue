@@ -1,23 +1,48 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useEmergencyStore } from '@/stores/emergency'
+import { useContactStore } from '@/stores/contacts'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
-const emergencyStore = useEmergencyStore()
+const contactStore = useContactStore()
+const userStore = useUserStore()
 
-const goBack = () => {
-  router.push('/')
-}
+const goBack = () => router.push('/')
 
 // Emergency state
 const sosActive = ref(false)
+const showSosAlert = ref(false)
 
-const hospitals = ref([
-  { name: 'Bangkok Hospital', distance: '1.2 km', time: '5 min', address: '123 Sukhumvit Rd' },
-  { name: 'Samitivej Hospital', distance: '2.5 km', time: '10 min', address: '456 Srinakarin Rd' },
-  { name: 'Burns Society Hospital', distance: '3.8 km', time: '15 min', address: '789 Rama IV Rd' },
-])
+onMounted(async () => {
+  await userStore.fetchUser()
+  await contactStore.fetchContacts()
+})
+
+const triggerSOS = () => {
+  showSosAlert.value = true
+  sosActive.value = true
+
+  // Auto hide after 5 seconds
+  setTimeout(() => {
+    showSosAlert.value = false
+    sosActive.value = false
+  }, 5000)
+}
+
+const dismissSOS = () => {
+  showSosAlert.value = false
+  sosActive.value = false
+}
+
+const callNumber = (number) => {
+  window.location.href = `tel:${number}`
+}
+
+const callHospital = () => {
+  const hospitalPhone = '1669'
+  window.location.href = `tel:${hospitalPhone}`
+}
 
 const scrollContainer = ref(null)
 let isDown = false
@@ -38,19 +63,6 @@ const handleMouseMove = (e) => {
   const walk = (y - startY) * 1.5
   scrollContainer.value.scrollTop = scrollTop - walk
 }
-
-const triggerSOS = () => {
-  sosActive.value = true
-  // In real app: trigger phone call, notify contacts, etc.
-  setTimeout(() => {
-    sosActive.value = false
-  }, 3000)
-}
-
-const callNumber = (number) => {
-  // In real app: use tel: or call API
-  console.log('Calling:', number)
-}
 </script>
 
 <template>
@@ -62,6 +74,21 @@ const callNumber = (number) => {
     @mouseup="handleMouseUp"
     @mousemove="handleMouseMove"
   >
+    <!-- SOS Alert Overlay -->
+    <div v-if="showSosAlert" class="sos-overlay" @click="dismissSOS">
+      <div class="sos-alert-box">
+        <div class="sos-alert-icon">🚨</div>
+        <div class="sos-alert-text">SOS</div>
+        <div class="sos-alert-sub">Emergency Alert Sent!</div>
+        <div class="sos-alert-phone">
+          <button class="sos-call-btn" @click.stop="callHospital">
+            📞 Call Hospital
+          </button>
+        </div>
+        <div class="sos-alert-dismiss">Tap anywhere to dismiss</div>
+      </div>
+    </div>
+
     <!-- Top Nav -->
     <header class="app-header">
       <button class="back-btn" @click="goBack">❮</button>
@@ -82,36 +109,32 @@ const callNumber = (number) => {
       </button>
     </section>
 
-    <!-- Map Placeholder -->
-    <section class="card map-card">
-      <div class="map-placeholder">
-        <div class="map-content">
-          <span class="map-icon">📍</span>
-          <span class="map-label">Bangkok Hospital</span>
-          <span class="map-distance">1.2 km • 5 min drive</span>
-          <div class="route-line"></div>
-        </div>
-      </div>
-      <button class="direction-btn">🗺️ Get Directions</button>
+    <!-- Hospital Quick Call -->
+    <section class="card hospital-call-card">
+      <h3>🚑 Call Hospital</h3>
+      <button class="hospital-call-btn" @click="callHospital">
+        📞 {{ userStore.user?.hospital || 'Emergency' }}
+        <span class="call-text">Tap to Call</span>
+      </button>
     </section>
 
     <!-- Hospital List -->
     <section class="card hospital-list-card">
       <h3>Nearby Hospitals</h3>
       <div class="hospital-items">
-        <div
-          v-for="(hospital, idx) in hospitals"
-          :key="idx"
-          class="hospital-item"
-        >
+        <div class="hospital-item">
           <div class="hospital-info">
-            <span class="hospital-name">{{ hospital.name }}</span>
-            <span class="hospital-address">{{ hospital.address }}</span>
+            <span class="hospital-name">Bangkok Hospital</span>
+            <span class="hospital-address">123 Sukhumvit Rd</span>
           </div>
-          <div class="hospital-meta">
-            <span class="hospital-distance">{{ hospital.distance }}</span>
-            <span class="hospital-time">{{ hospital.time }}</span>
+          <button class="call-btn" @click="callNumber('1669')">📞</button>
+        </div>
+        <div class="hospital-item">
+          <div class="hospital-info">
+            <span class="hospital-name">Samitivej Hospital</span>
+            <span class="hospital-address">456 Srinakarin Rd</span>
           </div>
+          <button class="call-btn" @click="callNumber('1669')">📞</button>
         </div>
       </div>
     </section>
@@ -121,20 +144,20 @@ const callNumber = (number) => {
       <h3>Emergency Contacts</h3>
       <div class="contact-items">
         <div
-          v-for="(contact, idx) in emergencyStore.emergencyContacts"
+          v-for="(contact, idx) in contactStore.contacts"
           :key="idx"
           class="contact-item"
         >
           <div class="contact-left">
             <span class="contact-icon">
-              {{ contact.type === 'emergency' ? '🚨' : contact.type === 'doctor' ? '👩‍⚕️' : '👨' }}
+              {{ contact.contact_type === 'emergency' ? '🚨' : contact.contact_type === 'doctor' ? '👩‍⚕️' : '👨' }}
             </span>
             <div class="contact-info">
               <span class="contact-name">{{ contact.name }}</span>
-              <span class="contact-number">{{ contact.number }}</span>
+              <span class="contact-number">{{ contact.phone }}</span>
             </div>
           </div>
-          <button class="call-btn" @click="callNumber(contact.number)">📞</button>
+          <button class="call-btn" @click="callNumber(contact.phone)">📞</button>
         </div>
       </div>
     </section>
@@ -402,6 +425,90 @@ const callNumber = (number) => {
   align-items: center;
   justify-content: center;
 }
+
+/* SOS Alert Overlay */
+.sos-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(217, 83, 79, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: sosFlash 0.5s infinite;
+}
+
+@keyframes sosFlash {
+  0%, 100% { background: rgba(217, 83, 79, 0.95); }
+  50% { background: rgba(255, 0, 0, 0.95); }
+}
+
+.sos-alert-box {
+  text-align: center;
+  color: white;
+  animation: sosPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes sosPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.sos-alert-icon {
+  font-size: 80px;
+  animation: sosBounce 0.3s ease-in-out infinite;
+}
+
+@keyframes sosBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.sos-alert-text {
+  font-size: 72px;
+  font-weight: bold;
+  margin: 20px 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.sos-alert-sub {
+  font-size: 20px;
+  margin-bottom: 30px;
+}
+
+.sos-alert-phone {
+  margin-bottom: 20px;
+}
+
+.sos-call-btn {
+  background: white;
+  color: #d9534f;
+  border: none;
+  border-radius: 50px;
+  padding: 20px 40px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.sos-alert-dismiss {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Hospital Call Card */
+.hospital-call-card { background: linear-gradient(135deg, #fcdcdb, #f5c6c5); border: 2px solid #d9534f; }
+.hospital-call-card h3 { text-align: center; margin-bottom: 12px; }
+.hospital-call-btn {
+  width: 100%; background: #d9534f; color: white; border: none; border-radius: 16px;
+  padding: 16px; font-size: 16px; font-weight: bold; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.call-text { font-size: 11px; font-weight: normal; opacity: 0.9; }
 
 /* Bottom Nav */
 .bottom-nav {

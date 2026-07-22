@@ -1,10 +1,23 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
+import { useUserStore } from '@/stores/user'
+import { useDeviceStore } from '@/stores/devices'
 
 const router = useRouter()
 const healthStore = useHealthStore()
+const userStore = useUserStore()
+const deviceStore = useDeviceStore()
+
+onMounted(async () => {
+  await Promise.all([
+    healthStore.fetchLatest(),
+    healthStore.fetchStats(),
+    userStore.fetchUser(),
+    deviceStore.fetchDevices(),
+  ])
+})
 
 // ระบบ Click , Drag
 const scrollContainer = ref(null)
@@ -51,13 +64,13 @@ const handleMouseMove = (e) => {
       <div class="user-profile">
         <span class="avatar">👋</span>
         <div class="user-text">
-          <h1>Good Morning, Mother</h1>
-          <p class="sub-text">Week 28 Pregnancy</p>
+          <h1>Good Morning, {{ userStore.user?.name?.split(' ')[0] || 'Mother' }}</h1>
+          <p class="sub-text">Week {{ userStore.user?.pregnancy_week || '-' }} Pregnancy</p>
         </div>
       </div>
       <div class="header-icons">
         <button class="icon-btn notification">🔔<span class="badge-dot"></span></button>
-        <button class="icon-btn">⚙️</button>
+        <button class="icon-btn" @click="router.push('/profile')">⚙️</button>
       </div>
     </header>
 
@@ -68,21 +81,25 @@ const handleMouseMove = (e) => {
           <span class="p-icon">🌀</span>
           <div class="p-info">
             <span class="p-label">Device Status : </span>
-            <span class="p-value status-active">Connected</span>
+            <span class="p-value" :class="{ 'status-active': deviceStore.activeDevice, 'status-inactive': !deviceStore.activeDevice }">
+              {{ deviceStore.activeDevice ? 'Connected' : 'Disconnected' }}
+            </span>
           </div>
         </div>
         <div class="patch-item border-right">
           <span class="p-icon">🔋</span>
           <div class="p-info">
             <span class="p-label">Battery :</span>
-            <span class="p-value">92%</span>
+            <span class="p-value">--%</span>
           </div>
         </div>
         <div class="patch-item">
           <span class="p-icon">📶</span>
           <div class="p-info">
             <span class="p-label">Bluetooth :</span>
-            <span class="p-value status-active">Strong</span>
+            <span class="p-value" :class="{ 'status-active': deviceStore.activeDevice }">
+              {{ deviceStore.activeDevice ? 'Strong' : 'No Device' }}
+            </span>
           </div>
         </div>
       </div>
@@ -96,8 +113,7 @@ const handleMouseMove = (e) => {
           <div class="m-content">
             <span class="m-label">Heart Rate</span>
             <span class="m-value">
-              {{ healthStore.metrics.heartRate }} <small>bpm</small> ,
-              <span class="txt-green">Normal</span>
+              {{ healthStore.latest?.heart_rate || '-' }} <small>bpm</small>
             </span>
           </div>
         </div>
@@ -105,21 +121,21 @@ const handleMouseMove = (e) => {
           <span class="m-icon">👶</span>
           <div class="m-content">
             <span class="m-label">Baby Movement</span>
-            <span class="m-value">{{ healthStore.metrics.babyMovement }} <small>Time/Today</small></span>
+            <span class="m-value">{{ healthStore.latest?.baby_movement || '-' }} <small>Time/Today</small></span>
           </div>
         </div>
         <div class="metric-card bg-orange">
           <span class="m-icon">🌡️</span>
           <div class="m-content">
             <span class="m-label">Temperature</span>
-            <span class="m-value">{{ healthStore.metrics.temperature }}°C</span>
+            <span class="m-value">{{ healthStore.latest?.temperature ? healthStore.latest.temperature + '°C' : '--°C' }}</span>
           </div>
         </div>
         <div class="metric-card bg-green-light">
           <span class="m-icon">🙂</span>
           <div class="m-content">
             <span class="m-label">Stress</span>
-            <span class="m-value txt-green">{{ healthStore.metrics.stressLevel }}</span>
+            <span class="m-value txt-green">{{ healthStore.latest?.stress_level || 'N/A' }}</span>
           </div>
         </div>
       </div>
@@ -141,10 +157,10 @@ const handleMouseMove = (e) => {
         <div class="gauge-container">
           <div class="gauge-arc">
             <div class="gauge-inner">
-              <span class="score-val">{{ healthStore.metrics.healthScore }}%</span>
+              <span class="score-val">{{ healthStore.stats?.avg_heart_rate ? '97' : '--' }}%</span>
             </div>
           </div>
-          <span class="score-status">Excellent</span>
+          <span class="score-status">{{ healthStore.stats?.avg_heart_rate ? 'Excellent' : 'No Data' }}</span>
         </div>
       </div>
     </div>

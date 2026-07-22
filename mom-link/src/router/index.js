@@ -5,6 +5,7 @@ import AIAnalysisView from '@/views/AIAnalysisView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import HealthReportView from '@/views/HealthReportView.vue'
 import EmergencyView from '@/views/EmergencyView.vue'
+import BluetoothView from '@/views/BluetoothView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: '/emergency',
       name: 'emergency',
       component: EmergencyView
+    },
+    {
+      path: '/bluetooth',
+      name: 'bluetooth',
+      component: BluetoothView
     }
   ]
 })

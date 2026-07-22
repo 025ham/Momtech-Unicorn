@@ -6,17 +6,17 @@ import { useHealthStore } from '@/stores/health'
 const router = useRouter()
 const healthStore = useHealthStore()
 const scrollContainer = ref(null)
+const isSimulating = ref(false)
+let simInterval = null
 
-const goBack = () => {
-  router.push('/')
-}
+const goBack = () => router.push('/')
 
-// Mock Data
-const heartRate = computed(() => healthStore.metrics.heartRate)
-const movementCurrent = computed(() => healthStore.metrics.babyMovement)
-const movementTarget = computed(() => healthStore.metrics.movementTarget)
-const temperature = computed(() => healthStore.metrics.temperature)
-const stressLevel = computed(() => healthStore.metrics.stressLevel)
+// Real data from store
+const heartRate = computed(() => healthStore.latest?.heart_rate || '--')
+const temperature = computed(() => healthStore.latest?.temperature || '--')
+const stressLevel = computed(() => healthStore.latest?.stress_level || 'N/A')
+const movementCurrent = computed(() => healthStore.latest?.baby_movement || 0)
+const movementTarget = ref(20)
 
 const timelineEvents = ref([
   { time: '17:00', type: 'pink', active: false },
@@ -24,8 +24,29 @@ const timelineEvents = ref([
   { time: '18:20', type: 'pink', active: false }
 ])
 
-// Heart Rate Graph Data - simulated real-time
-const heartRateData = computed(() => healthStore.metrics.heartRateHistory)
+// Heart Rate Graph - simulate real-time if no real data
+const heartRateHistory = ref([120, 135, 128, 142, 138, 145, 140, 148, 143, 147, 144, 146])
+const movementHistory = ref([5, 8, 12, 6, 9, 11, 7, 10, 13, 8, 6, 9])
+const temperatureHistory = ref([36.5, 36.6, 36.7, 36.6, 36.8, 36.7, 36.5, 36.6, 36.7, 36.8, 36.6, 36.7])
+
+const heartRateData = computed(() => {
+  const logs = healthStore.logs.slice(0, 12).reverse()
+  const apiData = logs.map(l => l.heart_rate).filter(Boolean)
+  return apiData.length > 0 ? apiData : heartRateHistory.value
+})
+
+const movementData = computed(() => {
+  const logs = healthStore.logs.slice(0, 12).reverse()
+  const apiData = logs.map(l => l.baby_movement).filter(Boolean)
+  return apiData.length > 0 ? apiData : movementHistory.value
+})
+
+const temperatureData = computed(() => {
+  const logs = healthStore.logs.slice(0, 12).reverse()
+  const apiData = logs.map(l => l.temperature).filter(Boolean)
+  return apiData.length > 0 ? apiData : temperatureHistory.value
+})
+
 const maxHR = 180
 const minHR = 60
 const graphPoints = computed(() => {
@@ -33,8 +54,8 @@ const graphPoints = computed(() => {
   const height = 120
   const padding = 10
   const data = heartRateData.value
+  if (data.length < 2) return []
   const stepX = (width - padding * 2) / (data.length - 1)
-
   return data.map((val, i) => {
     const x = padding + i * stepX
     const y = height - padding - ((val - minHR) / (maxHR - minHR)) * (height - padding * 2)
@@ -42,7 +63,6 @@ const graphPoints = computed(() => {
   })
 })
 
-// Generate smooth SVG path
 const linePath = computed(() => {
   const pts = graphPoints.value
   if (pts.length < 2) return ''
@@ -57,7 +77,6 @@ const linePath = computed(() => {
   return d
 })
 
-// Area fill path
 const areaPath = computed(() => {
   const pts = graphPoints.value
   if (pts.length < 2) return ''
@@ -76,21 +95,63 @@ const areaPath = computed(() => {
   return d
 })
 
-// Simulate real-time heart rate update
-let intervalId = null
-const currentHR = ref(145)
+const currentHR = computed(() => {
+  if (isSimulating.value && heartRateHistory.value.length > 0) {
+    return heartRateHistory.value[heartRateHistory.value.length - 1]
+  }
+  return healthStore.latest?.heart_rate || '--'
+})
+
 onMounted(() => {
-  intervalId = setInterval(() => {
-    // Simulate small fluctuations
-    const baseHR = 140 + Math.floor(Math.random() * 15) - 7
-    currentHR.value = baseHR
-    // Update store
-    healthStore.addHeartRateReading(baseHR)
-  }, 2000)
+  healthStore.fetchLogs(50)
+
+  // Simulate real-time data if no real data
+  if (healthStore.logs.length === 0) {
+    isSimulating.value = true
+    simInterval = setInterval(() => {
+      const newHR = 140 + Math.floor(Math.random() * 15) - 7
+      const newMov = Math.floor(Math.random() * 6) + 5
+      const newTemp = (36.3 + Math.random() * 0.8).toFixed(1)
+      heartRateHistory.value = [...heartRateHistory.value.slice(1), newHR]
+      movementHistory.value = [...movementHistory.value.slice(1), newMov]
+      temperatureHistory.value = [...temperatureHistory.value.slice(1), parseFloat(newTemp)]
+    }, 2000)
+  }
 })
+
 onUnmounted(() => {
-  if (intervalId) clearInterval(intervalId)
+  if (simInterval) clearInterval(simInterval)
 })
+
+const exportAndShare = () => {
+  const logs = healthStore.logs
+  if (logs.length === 0) {
+    alert('No data to share')
+    return
+  }
+  const summary = `
+Health Report - MomLink
+Date: ${new Date().toLocaleDateString()}
+========================
+Heart Rate: ${logs[0]?.heart_rate || '-'} bpm
+Temperature: ${logs[0]?.temperature || '-'}°C
+Baby Movement: ${logs[0]?.baby_movement || '-'} times
+Stress Level: ${logs[0]?.stress_level || '-'}
+========================
+Full logs: ${logs.length} records
+  `.trim()
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'MomLink Health Report',
+      text: summary
+    }).catch(() => {})
+  } else {
+    navigator.clipboard.writeText(summary).then(() => {
+      alert('Report copied to clipboard!')
+    })
+  }
+}
 
 
 let isDown = false
@@ -228,8 +289,8 @@ const handleMouseMove = (e) => {
 
     <!-- Action Buttons -->
     <div class="action-row">
-      <button class="action-btn btn-refresh"> Refresh</button>
-      <button class="action-btn btn-export"> Export Data</button>
+      <button class="action-btn btn-refresh" @click="healthStore.fetchLogs(50)">🔄 Refresh</button>
+      <button class="action-btn btn-export" @click="exportAndShare">📤 Share to Doctor</button>
     </div>
 
     <!-- Bottom Nav-->

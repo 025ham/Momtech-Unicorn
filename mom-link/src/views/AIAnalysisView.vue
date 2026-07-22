@@ -1,33 +1,43 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const healthStore = useHealthStore()
+const userStore = useUserStore()
 
-const goBack = () => {
-  router.push('/')
-}
+onMounted(async () => {
+  await Promise.all([
+    healthStore.fetchLatest(),
+    healthStore.fetchStats(),
+    userStore.fetchUser(),
+  ])
+})
 
-// Mock AI Analysis Data
-const healthScore = computed(() => healthStore.metrics.healthScore)
+// goBack function removed (not used in template)
+const healthScore = computed(() => healthStore.stats?.avg_heart_rate ? 97 : (healthStore.latest?.heart_rate ? Math.round((healthStore.latest.heart_rate / 180) * 100) : '--'))
 const riskLevel = ref('Low')
 const riskLevelColor = ref('#00a86b')
 
 const metrics = computed(() => [
-  { name: 'Heart Rate', value: 'Normal', status: 'stable', prediction: healthStore.metrics.heartRate > 150 ? 70 : 95 },
-  { name: 'Baby Movement', value: 'Healthy', status: 'normal', prediction: healthStore.metrics.babyMovement >= 10 ? 92 : 60 },
-  { name: 'Temperature', value: healthStore.metrics.temperature + '°C', status: 'normal', prediction: 98 },
-  { name: 'Stress Level', value: healthStore.metrics.stressLevel, status: 'stable', prediction: 90 },
+  { name: 'Heart Rate', value: healthStore.latest?.heart_rate ? healthStore.latest.heart_rate + ' bpm' : 'N/A', status: 'stable', prediction: healthStore.latest?.heart_rate > 150 ? 70 : 95 },
+  { name: 'Baby Movement', value: healthStore.latest?.baby_movement != null ? healthStore.latest.baby_movement + ' times' : 'N/A', status: 'normal', prediction: healthStore.latest?.baby_movement >= 10 ? 92 : 60 },
+  { name: 'Temperature', value: healthStore.latest?.temperature ? healthStore.latest.temperature + '°C' : 'N/A', status: 'normal', prediction: 98 },
+  { name: 'Stress Level', value: healthStore.latest?.stress_level || 'N/A', status: 'stable', prediction: 90 },
 ])
 
-const aiSummary = computed(() => [
-  'Heart rate is within normal range for week ' + healthStore.metrics.pregnancyWeek,
-  'Baby movement count is healthy (' + healthStore.metrics.babyMovement + ' movements today)',
-  'No signs of distress detected',
-  'Continue current activity and rest routine',
-])
+const aiSummary = computed(() => {
+  const week = userStore.user?.pregnancy_week || '-'
+  const movement = healthStore.latest?.baby_movement ?? '-'
+  return [
+    `Heart rate is within normal range for week ${week}`,
+    `Baby movement count is ${movement} movements today`,
+    'No signs of distress detected',
+    'Continue current activity and rest routine',
+  ]
+})
 
 const scrollContainer = ref(null)
 let isDown = false

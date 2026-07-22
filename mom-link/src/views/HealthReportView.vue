@@ -1,10 +1,14 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
 
 const router = useRouter()
 const healthStore = useHealthStore()
+
+onMounted(() => {
+  healthStore.fetchLogs(100)
+})
 
 const goBack = () => {
   router.push('/')
@@ -14,10 +18,10 @@ const goBack = () => {
 const activeFilter = ref('today')
 const filters = ['today', 'week', 'month']
 
-// Mock data
-const heartRateData = computed(() => healthStore.metrics.heartRateHistory)
-const movementData = ref([5, 8, 12, 6, 9, 11, 7, 10, 13, 8, 6, 9])
-const temperatureData = ref([36.5, 36.6, 36.7, 36.6, 36.8, 36.7, 36.5, 36.6, 36.7, 36.8, 36.6, 36.7])
+// Real data from store
+const heartRateData = computed(() => healthStore.logs.map(l => l.heart_rate).filter(Boolean))
+const movementData = computed(() => healthStore.logs.map(l => l.baby_movement).filter(Boolean))
+const temperatureData = computed(() => healthStore.logs.map(l => l.temperature).filter(Boolean))
 
 const maxHR = 180
 const minHR = 60

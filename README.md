@@ -1,63 +1,179 @@
 # Momtech-Unicorn
-## หน้าจอของแอปพลิเคชัน (จาก Figma)
 
-### 1. Home 
-* [x]  **Header:** แสดงการต้อนรับข้อมูลสัปดาห์การตั้งครรภ์ (e.g., Week 38 Pregnancy) และปุ่มแจ้งเตือน
+แอปพลิเคชันติดตามสุขภาพครรภ์ (Maternal Health Monitoring)
 
-* [x]  **Device Status:** แถบแสดงสถานะการเชื่อมต่อของแผ่นแปะ (Momentum Patch, Battery, Bluetooth)
+## โครงสร้างโปรเจกต์
 
-* [x]  **Today's Health:** สรุปค่าสัญญาณชีพวันนี้ (Heart Rate, Baby Movement, Temperature, Stress)
+```
+Momtech-Unicorn/
+├── backend/                    # Express + SQLite API Server
+│   ├── package.json
+│   ├── db.sqlite              # SQLite Database
+│   └── src/
+│       ├── index.js           # Express Server (port 3000)
+│       ├── db/
+│       │   ├── connection.js  # Database connection
+│       │   └── init.js        # Schema + Demo data
+│       └── routes/
+│           ├── userRoutes.js       # /api/users
+│           ├── deviceRoutes.js      # /api/devices
+│           ├── healthLogRoutes.js  # /api/health-logs
+│           └── contactRoutes.js    # /api/contacts
+│
+└── mom-link/                  # Vue 3 Frontend
+    ├── package.json
+    ├── src/
+    │   ├── api/index.js       # API client
+    │   ├── stores/            # Pinia stores
+    │   │   ├── user.js       # User profile
+    │   │   ├── devices.js    # Bluetooth devices
+    │   │   ├── health.js     # Health logs
+    │   │   └── contacts.js   # Emergency contacts
+    │   ├── views/            # Vue pages
+    │   │   ├── HomeView.vue
+    │   │   ├── MonitorView.vue
+    │   │   ├── AIAnalysisView.vue
+    │   │   ├── ProfileView.vue
+    │   │   ├── HealthReportView.vue
+    │   │   ├── EmergencyView.vue
+    │   │   └── BluetoothView.vue
+    │   └── router/index.js
+    └── dist/                  # Built frontend
+```
 
-* [x]  **AI Health Score & Recommendation:** คะแนนสุขภาพภาพรวม และคำแนะนำเบื้องต้นจาก AI
+## Backend API
 
-* [ ]  **Quick Action & Navigation:** ปุ่มลัดสำหรับเข้าถึงเมนูสำคัญ และ Bottom Navigation Bar
+### Database Schema
 
-### 2. Live Monitor 
-* [ ]  **Heart Rate Graph:** กราฟแสดงอัตราการเต้นของหัวใจแบบเรียลไทม์
+| Table | Description |
+|-------|-------------|
+| `users` | โปรไฟล์ผู้ใช้ + ข้อมูลครรภ์ |
+| `bluetooth_devices` | อุปกรณ์ Bluetooth |
+| `health_logs` | ข้อมูลสุขภาพจากอุปกรณ์ |
+| `emergency_contacts` | ผู้ติดต่อฉุกเฉิน |
 
-* [x]  **Baby Movement Counter:** ตัวนับจำนวนการดิ้นของทารกในครรภ์ และ Timeline เวลาที่ดิ้นล่าสุด
+### API Endpoints
 
-* [x]  **Metrics:** การ์ดแสดงผลอุณหภูมิร่างกาย และระดับความเครียด (Stress Level) พร้อมปุ่ม Refresh/Export ข้อมูล
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users/:id` | ดึงข้อมูลผู้ใช้ |
+| PUT | `/api/users/:id` | แก้ไขโปรไฟล์ |
+| POST | `/api/users/register` | ลงทะเบียน |
+| POST | `/api/users/login` | เข้าสู่ระบบ |
+| GET | `/api/devices?user_id=X` | ดึงรายการอุปกรณ์ |
+| POST | `/api/devices` | เพิ่มอุปกรณ์ |
+| PUT | `/api/devices/:id/set-active` | เลือกอุปกรณ์ที่ใช้ |
+| DELETE | `/api/devices/:id` | ลบอุปกรณ์ |
+| GET | `/api/health-logs?user_id=X` | ดึงข้อมูลสุขภาพ |
+| GET | `/api/health-logs/latest` | ดึงข้อมูลล่าสุด |
+| POST | `/api/health-logs` | เพิ่มข้อมูลสุขภาพ |
+| GET | `/api/health-logs/export?format=csv` | Export CSV |
+| GET | `/api/contacts?user_id=X` | ดึงผู้ติดต่อฉุกเฉิน |
+| POST | `/api/contacts` | เพิ่มผู้ติดต่อ |
+| DELETE | `/api/contacts/:id` | ลบผู้ติดต่อ |
 
-### 3. AI Analysis 
-* [ ]  **Health Score & Risk Gauge:** หน้าปัดแสดงระดับความเสี่ยง (Risk Level) และคะแนนสุขภาพ 97%
+## Features ที่เพิ่มมา
 
-* [ ]  **AI Summary:** สรุปผลภาพรวมในรูปแบบ Bullet points
+### 1. Backend API (Express + SQLite)
+- RESTful API สำหรับ users, devices, health-logs, contacts
+- Authentication (register/login)
+- Export CSV สำหรับข้อมูลสุขภาพ
 
-* [ ]  **Detected Pattern:** สถานะของแต่ละตัวแปร (Normal/Stable/Low) พร้อมตัวทำนาย (Prediction) % ความปลอดภัยในการตั้งครรภ์
+### 2. Bluetooth Device System
+- รองรับการเพิ่มอุปกรณ์ Bluetooth (ทั้งจริงและ Demo)
+- **Demo Devices:**
+  - ❤️ Heart Rate Monitor Pro
+  - 🌡️ Temp Sensor Mini
+  - 👶 Baby Movement Detector
+  - ⚠️ Emergency Test Device (ค่าผิดปกติ)
 
-### 4. Profile 
-* [ ]  **User Bio:** ข้อมูลผู้ป่วย (อายุ, จำนวนสัปดาห์ครรภ์, วันกำหนดคลอด, โรงพยาบาล, ชื่อคุณหมอเจ้าของไข้)
+### 3. Emergency Alert System
+- เมื่อเลือก Emergency Test Device จะขึ้น Alert จอแดงกระพริบ
+- แสดงค่าที่ผิดปกติ (HR 170-200 bpm, Temp 37.8-39°C, Movement 0-2)
+- ปุ่ม "Go to Emergency" และ "Dismiss"
+- หน้า Emergency มี:
+  - ปุ่ม SOS พร้อม Animation
+  - ปุ่มโทรโรงพยาบาลด่วน
+  - รายชื่อ รพ. + ปุ่มโทร
+  - ผู้ติดต่อฉุกเฉินจาก Database
 
-* [ ]  **Device Management:** เมนูจัดการอุปกรณ์สวมใส่ และปุ่ม Edit Profile / Logout
+### 4. Profile Management
+- แก้ไขโปรไฟล์ได้ (ชื่อ, อายุ, สัปดาห์ครรภ์, วันกำหนดคลอด, โรงพยาบาล, คุณหมอ, หมู่เลือด, ภูมิแพ้)
+- Export ข้อมูลสุขภาพเป็น CSV
+- จัดการ Bluetooth Devices
 
-### 5. Health Report 
-* [ ]  **Time Filter:** ปุ่มสลับดูข้อมูลรายวัน (Today), รายสัปดาห์ (Week), และรายเดือน (Month)
+### 5. Share to Doctor
+- กดแชร์รายงานสุขภาพผ่าน Web Share API หรือ Copy to Clipboard
 
-* [ ]  **Charts:** กราฟสรุปประวัติย้อนหลังของ Heart Rate, Movement, Temperature
+## วิธีติดตั้งและรัน
 
-* [ ]  **Doctor Report:** ความเห็นแพทย์ย้อนหลัง พร้อมปุ่ม Download PDF และ Share ให้คุณหมอ
+### 1. Backend
+```bash
+cd backend
+npm install
+npm run db:init   # สร้าง Database + Demo User
+npm run dev       # รัน Server (port 3000)
+```
 
-### 6. Emergency (ระบบแจ้งเหตุฉุกเฉิน)
-* [ ]  **SOS Button:** ปุ่มกดเพื่อยืนยันการโทรฉุกเฉิน
+**Demo User:**
+- ID: 1
+- Email: sarah@example.com
+- Password: password
 
-* [ ]  **Map Integration:** แสดงแผนที่และเส้นทางไปยังโรงพยาบาลที่ใกล้ที่สุด (เช่น ABC Hospital พร้อมเวลาเดินทาง)
-
-* [ ]  **Hospital List:** รายชื่อโรงพยาบาลสำรองในบริเวณใกล้เคียงและระยะทาง
-
----
-
-## Tech Stack & เทคโนโลยีที่ใช้
-
-*   **Frontend Framework:** Vue 3 (Composition API) + Vite
-*   **Routing:** Vue Router (สำหรับจัดการหน้าจอ Mobile ทั้ง 6 หน้า)
-*   **State Management:** Pinia (สำหรับจำลองข้อมูลสัญญาณชีพและสถานะ SOS)
-*   **Mobile Wrapper:** Capacitor (สำหรับ Build เป็นแอปมือถือจริง)
-
----
-
-### 1. โคลนโปรเจกต์และติดตั้ง Dependencies
+### 2. Frontend
 ```bash
 cd mom-link
 npm install
+npm run dev       # รัน Vite Dev Server (port 5173)
+```
 
+### 3. Build Production
+```bash
+cd mom-link
+npm run build     # Build ไปที่ dist/
+```
+
+## การใช้งาน Demo
+
+1. **เพิ่ม Demo Device:**
+   - ไปที่ Profile > Bluetooth Devices
+   - กดปุ่ม Demo Devices ที่ต้องการ
+
+2. **ทดสอบ Emergency:**
+   - เพิ่ม "⚠️ Emergency Test Device"
+   - กด Select ที่ device นั้น
+   - จะเห็น Alert จอแดงกระพริบ
+   - กด "Go to Emergency" เพื่อไปหน้าฉุกเฉิน
+   - กดปุ่ม "📞 Call Hospital" เพื่อโทร
+
+3. **ดูข้อมูลสุขภาพ:**
+   - ไปที่ Home หรือ Monitor
+   - ดูค่าต่างๆ จาก Demo Device
+
+4. **แก้ไขโปรไฟล์:**
+   - ไปที่ Profile
+   - กด ✏️ เพื่อแก้ไข
+
+5. **Export ข้อมูล:**
+   - ไปที่ Profile
+   - กด "📥 Export Data"
+
+## Tech Stack
+
+- **Frontend:** Vue 3 (Composition API) + Vite + Pinia + Vue Router
+- **Backend:** Node.js + Express + better-sqlite3
+- **Database:** SQLite
+- **Mobile Wrapper:** Capacitor (สำหรับ Build เป็นแอปมือถือ)
+
+---
+
+## Changelog
+
+### v0.2.0 - Backend + Database Integration
+- เพิ่ม Express + SQLite Backend
+- RESTful API สำหรับ Users, Devices, Health Logs, Contacts
+- เปลี่ยนจาก mockup data เป็น API จริง
+- เพิ่ม Bluetooth Device Management
+- เพิ่ม Emergency Alert System
+- เพิ่ม Profile Edit + Export
+- เพิ่ม Share to Doctor
