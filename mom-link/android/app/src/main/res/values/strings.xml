@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MomLink</string>
+    <string name="title_activity_main">MomLink</string>
+    <string name="package_name">com.momtech.momlink</string>
+    <string name="custom_url_scheme">com.momtech.momlink</string>
+</resources>
