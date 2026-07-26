@@ -4,6 +4,17 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useDeviceStore } from '@/stores/devices'
 import { useHealthStore } from '@/stores/health'
+import IconBack from '@/components/icons/IconBack.vue'
+import IconEdit from '@/components/icons/IconEdit.vue'
+import IconWave from '@/components/icons/IconWave.vue'
+import IconHospital from '@/components/icons/IconHospital.vue'
+import IconBluetooth from '@/components/icons/IconBluetooth.vue'
+import IconDownload from '@/components/icons/IconDownload.vue'
+import IconLogout from '@/components/icons/IconLogout.vue'
+import IconHome from '@/components/icons/IconHome.vue'
+import IconTrendUp from '@/components/icons/IconTrendUp.vue'
+import IconSmile from '@/components/icons/IconSmile.vue'
+import IconUser from '@/components/icons/IconUser.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -78,14 +89,14 @@ const handleMouseMove = (e) => {
   >
     <!-- Top Nav -->
     <header class="app-header">
-      <button class="back-btn" @click="goBack">❮</button>
+      <button class="back-btn" @click="goBack"><IconBack :size="18" /></button>
       <h1>Profile</h1>
-      <button class="edit-btn" @click="startEdit">✏️</button>
+      <button class="edit-btn" @click="startEdit"><IconEdit :size="16" /></button>
     </header>
 
     <!-- User Bio Card -->
     <section class="card user-bio-card">
-      <div class="user-avatar">👩‍🍼</div>
+      <div class="user-avatar"><IconWave :size="40" /></div>
       <div class="user-info">
         <h2 class="user-name">{{ userStore.user?.name || 'Loading...' }}</h2>
         <p class="user-sub">Week {{ userStore.user?.pregnancy_week || '-'}} Pregnancy</p>
@@ -127,7 +138,7 @@ const handleMouseMove = (e) => {
       <h3>Hospital Information</h3>
       <template v-if="!isEditing">
         <div class="hospital-row">
-          <span class="hospital-icon">🏥</span>
+          <span class="hospital-icon"><IconHospital :size="28" /></span>
           <div class="hospital-info">
             <span class="hospital-name">{{ userStore.user?.hospital || '-' }}</span>
             <span class="doctor-name">{{ userStore.user?.doctor || '-' }}</span>
@@ -148,7 +159,7 @@ const handleMouseMove = (e) => {
       <div v-if="deviceStore.devices.length" class="device-list">
         <div v-for="device in deviceStore.devices" :key="device.id" class="device-item">
           <div class="device-left">
-            <span class="device-icon">🌀</span>
+            <span class="device-icon"><IconBluetooth :size="24" /></span>
             <div class="device-info">
               <span class="device-name">{{ device.name }}</span>
               <span class="device-type">{{ device.device_type }}</span>
@@ -165,20 +176,20 @@ const handleMouseMove = (e) => {
     <section class="card export-card">
       <h3>Export Health Data</h3>
       <p class="export-desc">Download your health logs as CSV</p>
-      <button class="export-btn" @click="exportData">📥 Export Data</button>
+      <button class="export-btn" @click="exportData"><IconDownload :size="16" /> Export Data</button>
     </section>
 
     <!-- Account Actions -->
     <section class="card account-card">
-      <button class="account-btn btn-logout">🚪 Logout</button>
+      <button class="account-btn btn-logout"><IconLogout :size="16" /> Logout</button>
     </section>
 
     <!-- Bottom Nav-->
     <nav class="bottom-nav">
-      <button class="nav-item" @click="router.push('/')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
-      <button class="nav-item" @click="router.push('/monitor')"><span class="nav-icon">📈</span><span class="nav-label">Monitor</span></button>
-      <button class="nav-item" @click="router.push('/ai-analysis')"><span class="nav-icon">😊</span><span class="nav-label">AI Analysis</span></button>
-      <button class="nav-item active"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
+      <button class="nav-item" @click="router.push('/')"><span class="nav-icon"><IconHome :size="20" /></span><span class="nav-label">Home</span></button>
+      <button class="nav-item" @click="router.push('/monitor')"><span class="nav-icon"><IconTrendUp :size="20" /></span><span class="nav-label">Monitor</span></button>
+      <button class="nav-item" @click="router.push('/ai-analysis')"><span class="nav-icon"><IconSmile :size="20" /></span><span class="nav-label">AI Analysis</span></button>
+      <button class="nav-item active"><span class="nav-icon"><IconUser :size="20" color="#5DC6BA" /></span><span class="nav-label">Profile</span></button>
     </nav>
   </div>
 </template>
@@ -270,8 +281,36 @@ const handleMouseMove = (e) => {
   padding: 12px 0 24px 0; border-top: 1px solid #f0eae1;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04); z-index: 100;
 }
-.nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #888; cursor: pointer; }
-.nav-item.active { color: #449284; }
+.nav-item {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #888;
+  cursor: pointer;
+  position: relative;
+  padding: 4px 12px;
+}
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background-color: #5DC6BA;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+.nav-item.active {
+  color: #5DC6BA;
+}
+.nav-item.active::after {
+  width: 24px;
+}
 .nav-icon { font-size: 18px; }
 .nav-label { font-size: 10px; font-weight: 500; }
 </style>

@@ -61,6 +61,9 @@ router.put('/:id', (req, res) => {
 
 // DELETE /api/devices/:id
 router.delete('/:id', (req, res) => {
+  // First delete related health logs
+  db.prepare('DELETE FROM health_logs WHERE device_id = ?').run(req.params.id);
+  // Then delete the device
   const result = db.prepare('DELETE FROM bluetooth_devices WHERE id = ?').run(req.params.id);
   if (result.changes === 0) return res.status(404).json({ error: 'Device not found' });
   res.json({ message: 'Device deleted successfully' });

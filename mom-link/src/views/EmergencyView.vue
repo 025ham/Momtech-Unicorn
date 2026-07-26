@@ -3,6 +3,17 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useContactStore } from '@/stores/contacts'
 import { useUserStore } from '@/stores/user'
+import IconBack from '@/components/icons/IconBack.vue'
+import IconWarning from '@/components/icons/IconWarning.vue'
+import IconSiren from '@/components/icons/IconSiren.vue'
+import IconPhone from '@/components/icons/IconPhone.vue'
+import IconHospital from '@/components/icons/IconHospital.vue'
+import IconDoctor from '@/components/icons/IconDoctor.vue'
+import IconPerson from '@/components/icons/IconPerson.vue'
+import IconHome from '@/components/icons/IconHome.vue'
+import IconTrendUp from '@/components/icons/IconTrendUp.vue'
+import IconSmile from '@/components/icons/IconSmile.vue'
+import IconUser from '@/components/icons/IconUser.vue'
 
 const router = useRouter()
 const contactStore = useContactStore()
@@ -77,12 +88,12 @@ const handleMouseMove = (e) => {
     <!-- SOS Alert Overlay -->
     <div v-if="showSosAlert" class="sos-overlay" @click="dismissSOS">
       <div class="sos-alert-box">
-        <div class="sos-alert-icon">🚨</div>
+        <div class="sos-alert-icon"><IconSiren :size="80" color="white" /></div>
         <div class="sos-alert-text">SOS</div>
         <div class="sos-alert-sub">Emergency Alert Sent!</div>
         <div class="sos-alert-phone">
           <button class="sos-call-btn" @click.stop="callHospital">
-            📞 Call Hospital
+            <IconPhone :size="20" color="#d9534f" /> Call Hospital
           </button>
         </div>
         <div class="sos-alert-dismiss">Tap anywhere to dismiss</div>
@@ -91,7 +102,7 @@ const handleMouseMove = (e) => {
 
     <!-- Top Nav -->
     <header class="app-header">
-      <button class="back-btn" @click="goBack">❮</button>
+      <button class="back-btn" @click="goBack"><IconBack :size="18" /></button>
       <h1>Emergency</h1>
       <div style="width: 24px;"></div>
     </header>
@@ -103,7 +114,7 @@ const handleMouseMove = (e) => {
         :class="{ active: sosActive }"
         @click="triggerSOS"
       >
-        <span class="sos-icon">⚠️</span>
+        <span class="sos-icon"><IconWarning :size="32" color="white" /></span>
         <span class="sos-text">SOS</span>
         <span class="sos-sub">Press to Emergency</span>
       </button>
@@ -111,9 +122,9 @@ const handleMouseMove = (e) => {
 
     <!-- Hospital Quick Call -->
     <section class="card hospital-call-card">
-      <h3>🚑 Call Hospital</h3>
+      <h3><IconSiren :size="16" color="#d9534f" /> Call Hospital</h3>
       <button class="hospital-call-btn" @click="callHospital">
-        📞 {{ userStore.user?.hospital || 'Emergency' }}
+        <IconPhone :size="18" color="white" /> {{ userStore.user?.hospital || 'Emergency' }}
         <span class="call-text">Tap to Call</span>
       </button>
     </section>
@@ -127,14 +138,14 @@ const handleMouseMove = (e) => {
             <span class="hospital-name">Bangkok Hospital</span>
             <span class="hospital-address">123 Sukhumvit Rd</span>
           </div>
-          <button class="call-btn" @click="callNumber('1669')">📞</button>
+          <button class="call-btn" @click="callNumber('1669')"><IconPhone :size="16" /></button>
         </div>
         <div class="hospital-item">
           <div class="hospital-info">
             <span class="hospital-name">Samitivej Hospital</span>
             <span class="hospital-address">456 Srinakarin Rd</span>
           </div>
-          <button class="call-btn" @click="callNumber('1669')">📞</button>
+          <button class="call-btn" @click="callNumber('1669')"><IconPhone :size="16" /></button>
         </div>
       </div>
     </section>
@@ -150,7 +161,9 @@ const handleMouseMove = (e) => {
         >
           <div class="contact-left">
             <span class="contact-icon">
-              {{ contact.contact_type === 'emergency' ? '🚨' : contact.contact_type === 'doctor' ? '👩‍⚕️' : '👨' }}
+              <IconSiren v-if="contact.contact_type === 'emergency'" :size="24" />
+              <IconDoctor v-else-if="contact.contact_type === 'doctor'" :size="24" />
+              <IconPerson v-else :size="24" />
             </span>
             <div class="contact-info">
               <span class="contact-name">{{ contact.name }}</span>
@@ -165,19 +178,19 @@ const handleMouseMove = (e) => {
     <!-- Bottom Nav-->
     <nav class="bottom-nav">
       <button class="nav-item" @click="router.push('/')">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon"><IconHome :size="20" /></span>
         <span class="nav-label">Home</span>
       </button>
       <button class="nav-item" @click="router.push('/monitor')">
-        <span class="nav-icon">📈</span>
+        <span class="nav-icon"><IconTrendUp :size="20" /></span>
         <span class="nav-label">Monitor</span>
       </button>
       <button class="nav-item" @click="router.push('/ai-analysis')">
-        <span class="nav-icon">😊</span>
+        <span class="nav-icon"><IconSmile :size="20" /></span>
         <span class="nav-label">AI Analysis</span>
       </button>
       <button class="nav-item" @click="router.push('/profile')">
-        <span class="nav-icon">👤</span>
+        <span class="nav-icon"><IconUser :size="20" /></span>
         <span class="nav-label">Profile</span>
       </button>
     </nav>
@@ -533,8 +546,23 @@ const handleMouseMove = (e) => {
   gap: 4px;
   color: #888;
   cursor: pointer;
+  position: relative;
+  padding: 4px 12px;
 }
-.nav-item.active { color: #449284; }
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background-color: #5DC6BA;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+.nav-item.active { color: #5DC6BA; }
+.nav-item.active::after { width: 24px; }
 .nav-icon { font-size: 18px; }
 .nav-label { font-size: 10px; font-weight: 500; }
 </style>

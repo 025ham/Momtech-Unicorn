@@ -3,6 +3,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
 import { useUserStore } from '@/stores/user'
+import IconBack from '@/components/icons/IconBack.vue'
+import IconHome from '@/components/icons/IconHome.vue'
+import IconTrendUp from '@/components/icons/IconTrendUp.vue'
+import IconSmile from '@/components/icons/IconSmile.vue'
+import IconUser from '@/components/icons/IconUser.vue'
 
 const router = useRouter()
 const healthStore = useHealthStore()
@@ -71,7 +76,7 @@ const handleMouseMove = (e) => {
   >
     <!-- Top Nav -->
     <header class="app-header">
-      <button class="back-btn" @click="goBack">❮</button>
+      <button class="back-btn" @click="router.push('/')"><IconBack :size="18" /></button>
       <h1>AI Analysis</h1>
       <div style="width: 24px;"></div>
     </header>
@@ -126,19 +131,19 @@ const handleMouseMove = (e) => {
     <!-- Bottom Nav-->
     <nav class="bottom-nav">
       <button class="nav-item" @click="router.push('/')">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon"><IconHome :size="20" /></span>
         <span class="nav-label">Home</span>
       </button>
       <button class="nav-item" @click="router.push('/monitor')">
-        <span class="nav-icon">📈</span>
+        <span class="nav-icon"><IconTrendUp :size="20" /></span>
         <span class="nav-label">Monitor</span>
       </button>
       <button class="nav-item active">
-        <span class="nav-icon">😊</span>
+        <span class="nav-icon"><IconSmile :size="20" color="#5DC6BA" /></span>
         <span class="nav-label">AI Analysis</span>
       </button>
       <button class="nav-item" @click="router.push('/profile')">
-        <span class="nav-icon">👤</span>
+        <span class="nav-icon"><IconUser :size="20" /></span>
         <span class="nav-label">Profile</span>
       </button>
     </nav>
@@ -366,8 +371,23 @@ const handleMouseMove = (e) => {
   gap: 4px;
   color: #888;
   cursor: pointer;
+  position: relative;
+  padding: 4px 12px;
 }
-.nav-item.active { color: #449284; }
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background-color: #5DC6BA;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+.nav-item.active { color: #5DC6BA; }
+.nav-item.active::after { width: 24px; }
 .nav-icon { font-size: 18px; }
 .nav-label { font-size: 10px; font-weight: 500; }
 </style>

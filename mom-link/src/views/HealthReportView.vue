@@ -2,6 +2,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
+import IconBack from '@/components/icons/IconBack.vue'
+import IconHeart from '@/components/icons/IconHeart.vue'
+import IconBaby from '@/components/icons/IconBaby.vue'
+import IconTemperature from '@/components/icons/IconTemperature.vue'
+import IconDownload from '@/components/icons/IconDownload.vue'
+import IconShare from '@/components/icons/IconShare.vue'
+import IconHome from '@/components/icons/IconHome.vue'
+import IconTrendUp from '@/components/icons/IconTrendUp.vue'
+import IconSmile from '@/components/icons/IconSmile.vue'
+import IconUser from '@/components/icons/IconUser.vue'
 
 const router = useRouter()
 const healthStore = useHealthStore()
@@ -107,7 +117,7 @@ const handleMouseMove = (e) => {
   >
     <!-- Top Nav -->
     <header class="app-header">
-      <button class="back-btn" @click="goBack">❮</button>
+      <button class="back-btn" @click="goBack"><IconBack :size="18" /></button>
       <h1>Health Report</h1>
       <div style="width: 24px;"></div>
     </header>
@@ -128,7 +138,7 @@ const handleMouseMove = (e) => {
     <!-- Heart Rate Chart -->
     <section class="card chart-card">
       <div class="chart-header">
-        <span class="chart-title">❤️ Heart Rate</span>
+        <span class="chart-title"><IconHeart :size="14" color="#d9534f" /> Heart Rate</span>
         <span class="chart-unit">bpm</span>
       </div>
       <svg viewBox="0 0 280 80" class="chart-svg">
@@ -146,7 +156,7 @@ const handleMouseMove = (e) => {
     <!-- Baby Movement Chart -->
     <section class="card chart-card">
       <div class="chart-header">
-        <span class="chart-title">👶 Baby Movement</span>
+        <span class="chart-title"><IconBaby :size="14" color="#2b5c8f" /> Baby Movement</span>
         <span class="chart-unit">times</span>
       </div>
       <svg viewBox="0 0 280 80" class="chart-svg">
@@ -164,7 +174,7 @@ const handleMouseMove = (e) => {
     <!-- Temperature Chart -->
     <section class="card chart-card">
       <div class="chart-header">
-        <span class="chart-title">🌡️ Temperature</span>
+        <span class="chart-title"><IconTemperature :size="14" color="#e26d5c" /> Temperature</span>
         <span class="chart-unit">°C</span>
       </div>
       <svg viewBox="0 0 280 80" class="chart-svg">
@@ -192,27 +202,27 @@ const handleMouseMove = (e) => {
         </div>
       </div>
       <div class="report-actions">
-        <button class="report-btn btn-download">📥 Download PDF</button>
-        <button class="report-btn btn-share">📤 Share to Doctor</button>
+        <button class="report-btn btn-download"><IconDownload :size="14" /> Download PDF</button>
+        <button class="report-btn btn-share"><IconShare :size="14" /> Share to Doctor</button>
       </div>
     </section>
 
     <!-- Bottom Nav-->
     <nav class="bottom-nav">
       <button class="nav-item" @click="router.push('/')">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon"><IconHome :size="20" /></span>
         <span class="nav-label">Home</span>
       </button>
       <button class="nav-item" @click="router.push('/monitor')">
-        <span class="nav-icon">📈</span>
+        <span class="nav-icon"><IconTrendUp :size="20" /></span>
         <span class="nav-label">Monitor</span>
       </button>
       <button class="nav-item" @click="router.push('/ai-analysis')">
-        <span class="nav-icon">😊</span>
+        <span class="nav-icon"><IconSmile :size="20" /></span>
         <span class="nav-label">AI Analysis</span>
       </button>
       <button class="nav-item" @click="router.push('/profile')">
-        <span class="nav-icon">👤</span>
+        <span class="nav-icon"><IconUser :size="20" /></span>
         <span class="nav-label">Profile</span>
       </button>
     </nav>
@@ -391,8 +401,23 @@ const handleMouseMove = (e) => {
   gap: 4px;
   color: #888;
   cursor: pointer;
+  position: relative;
+  padding: 4px 12px;
 }
-.nav-item.active { color: #449284; }
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background-color: #5DC6BA;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+.nav-item.active { color: #5DC6BA; }
+.nav-item.active::after { width: 24px; }
 .nav-icon { font-size: 18px; }
 .nav-label { font-size: 10px; font-weight: 500; }
 </style>

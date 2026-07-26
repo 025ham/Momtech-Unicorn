@@ -2,6 +2,16 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
+import IconBack from '@/components/icons/IconBack.vue'
+import IconHeart from '@/components/icons/IconHeart.vue'
+import IconRefresh from '@/components/icons/IconRefresh.vue'
+import IconShare from '@/components/icons/IconShare.vue'
+import IconHome from '@/components/icons/IconHome.vue'
+import IconTrendUp from '@/components/icons/IconTrendUp.vue'
+import IconSmile from '@/components/icons/IconSmile.vue'
+import IconUser from '@/components/icons/IconUser.vue'
+import IconFeetPink from '@/components/icons/IconFeetPink.vue'
+import IconFeetBlue from '@/components/icons/IconFeetBlue.vue'
 
 const router = useRouter()
 const healthStore = useHealthStore()
@@ -185,7 +195,7 @@ const handleMouseMove = (e) => {
   >
     <!-- Top Nav -->
     <header class="app-header">
-      <button class="back-btn" @click="goBack">❮</button>
+      <button class="back-btn" @click="goBack"><IconBack :size="18" /></button>
       <h1>Live Monitoring</h1>
       <div style="width: 24px;"></div> <!-- รักษาสมดุลกึ่งกลาง -->
     </header>
@@ -194,7 +204,7 @@ const handleMouseMove = (e) => {
     <section class="card heart-rate-card">
       <div class="card-header">
         <span class="title">Heart Rate</span>
-        <span class="value"><span class="icon-red">❤️</span> {{ heartRate }} <small>bpm</small></span>
+        <span class="value"><IconHeart :size="14" color="#d9534f" /> {{ heartRate }} <small>bpm</small></span>
       </div>
 
       <div class="graph-placeholder">
@@ -259,7 +269,7 @@ const handleMouseMove = (e) => {
           <div v-for="(event, idx) in timelineEvents" :key="idx" class="timeline-item" :class="{ active: event.active }">
             <span class="time-txt">{{ event.time }}</span>
             <span class="indicator-dot"></span>
-            <span class="feet-icon">{{ event.type === 'pink' ? '👣💖' : '👣💙' }}</span>
+            <span class="feet-icon"><IconFeetPink v-if="event.type === 'pink'" :size="16" /><IconFeetBlue v-else :size="16" /></span>
           </div>
         </div>
       </div>
@@ -289,26 +299,26 @@ const handleMouseMove = (e) => {
 
     <!-- Action Buttons -->
     <div class="action-row">
-      <button class="action-btn btn-refresh" @click="healthStore.fetchLogs(50)">🔄 Refresh</button>
-      <button class="action-btn btn-export" @click="exportAndShare">📤 Share to Doctor</button>
+      <button class="action-btn btn-refresh" @click="healthStore.fetchLogs(50)"><IconRefresh :size="16" /> Refresh</button>
+      <button class="action-btn btn-export" @click="exportAndShare"><IconShare :size="16" /> Share to Doctor</button>
     </div>
 
     <!-- Bottom Nav-->
     <nav class="bottom-nav">
       <button class="nav-item" @click="router.push('/')">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon"><IconHome :size="20" /></span>
         <span class="nav-label">Home</span>
       </button>
       <button class="nav-item active">
-        <span class="nav-icon">📈</span>
+        <span class="nav-icon"><IconTrendUp :size="20" color="#5DC6BA" /></span>
         <span class="nav-label">Monitor</span>
       </button>
       <button class="nav-item" @click="router.push('/ai-analysis')">
-        <span class="nav-icon">😊</span>
+        <span class="nav-icon"><IconSmile :size="20" /></span>
         <span class="nav-label">AI Analysis</span>
       </button>
       <button class="nav-item" @click="router.push('/profile')">
-        <span class="nav-icon">👤</span>
+        <span class="nav-icon"><IconUser :size="20" /></span>
         <span class="nav-label">Profile</span>
       </button>
     </nav>
@@ -535,7 +545,7 @@ const handleMouseMove = (e) => {
   justify-content: space-around;
   padding: 12px 0 24px 0;
   border-top: 1px solid #f0eae1;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04); 
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
   z-index: 100;
 }
 .nav-item {
@@ -547,8 +557,27 @@ const handleMouseMove = (e) => {
   gap: 4px;
   color: #888;
   cursor: pointer;
+  position: relative;
+  padding: 4px 12px;
 }
-.nav-item.active { color: #449284; }
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background-color: #5DC6BA;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+.nav-item.active {
+  color: #5DC6BA;
+}
+.nav-item.active::after {
+  width: 24px;
+}
 .nav-icon { font-size: 18px; }
 .nav-label { font-size: 10px; font-weight: 500; }
 </style>

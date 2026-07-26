@@ -1,14 +1,37 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
 import { useUserStore } from '@/stores/user'
 import { useDeviceStore } from '@/stores/devices'
+import IconWave from '@/components/icons/IconWave.vue'
+import IconBell from '@/components/icons/IconBell.vue'
+import IconSettings from '@/components/icons/IconSettings.vue'
+import IconBluetooth from '@/components/icons/IconBluetooth.vue'
+import IconBattery from '@/components/icons/IconBattery.vue'
+import IconSignal from '@/components/icons/IconSignal.vue'
+import IconHeart from '@/components/icons/IconHeart.vue'
+import IconBaby from '@/components/icons/IconBaby.vue'
+import IconTemperature from '@/components/icons/IconTemperature.vue'
+import IconSmile from '@/components/icons/IconSmile.vue'
+import IconTrendUp from '@/components/icons/IconTrendUp.vue'
+import IconDocument from '@/components/icons/IconDocument.vue'
+import IconWarning from '@/components/icons/IconWarning.vue'
+import IconHome from '@/components/icons/IconHome.vue'
+import IconUser from '@/components/icons/IconUser.vue'
 
 const router = useRouter()
 const healthStore = useHealthStore()
 const userStore = useUserStore()
 const deviceStore = useDeviceStore()
+
+// Notification system
+const showNotifications = ref(false)
+const notifications = ref([
+  { title: 'Remember your checkup tomorrow', time: '2 hours ago', read: false },
+  { title: 'Baby movement detected', time: '5 hours ago', read: true },
+])
+const hasUnread = computed(() => notifications.value.some(n => !n.read))
 
 onMounted(async () => {
   await Promise.all([
@@ -62,23 +85,48 @@ const handleMouseMove = (e) => {
   >
     <header class="app-header">
       <div class="user-profile">
-        <span class="avatar">👋</span>
+        <span class="avatar"><IconWave :size="28" /></span>
         <div class="user-text">
           <h1>Good Morning, {{ userStore.user?.name?.split(' ')[0] || 'Mother' }}</h1>
           <p class="sub-text">Week {{ userStore.user?.pregnancy_week || '-' }} Pregnancy</p>
         </div>
       </div>
       <div class="header-icons">
-        <button class="icon-btn notification">🔔<span class="badge-dot"></span></button>
-        <button class="icon-btn" @click="router.push('/profile')">⚙️</button>
+        <button class="icon-btn notification" @click="showNotifications = !showNotifications">
+          <IconBell :size="20" :color="showNotifications ? '#5DC6BA' : '#000000'" />
+          <span v-if="hasUnread" class="badge-dot"></span>
+        </button>
+        <button class="icon-btn" @click="router.push('/profile')"><IconSettings :size="20" /></button>
       </div>
     </header>
+
+    <!-- Notification Panel -->
+    <div v-if="showNotifications" class="notification-panel" @click="showNotifications = false">
+      <div class="notification-content" @click.stop>
+        <div class="notification-header">
+          <h3>Notifications</h3>
+          <button class="close-btn" @click="showNotifications = false">✕</button>
+        </div>
+        <div class="notification-list">
+          <div v-if="notifications.length === 0" class="no-notification">
+            No new notifications
+          </div>
+          <div v-for="(notif, idx) in notifications" :key="idx" class="notification-item" :class="{ unread: !notif.read }">
+            <div class="notif-icon"><IconBell :size="16" /></div>
+            <div class="notif-content">
+              <div class="notif-title">{{ notif.title }}</div>
+              <div class="notif-time">{{ notif.time }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <section class="momentum-patch-card">
       <div class="card-title">Momentum Patch</div>
       <div class="patch-grid">
         <div class="patch-item border-right">
-          <span class="p-icon">🌀</span>
+          <span class="p-icon"><IconBluetooth :size="16" /></span>
           <div class="p-info">
             <span class="p-label">Device Status : </span>
             <span class="p-value" :class="{ 'status-active': deviceStore.activeDevice, 'status-inactive': !deviceStore.activeDevice }">
@@ -87,14 +135,14 @@ const handleMouseMove = (e) => {
           </div>
         </div>
         <div class="patch-item border-right">
-          <span class="p-icon">🔋</span>
+          <span class="p-icon"><IconBattery :size="16" /></span>
           <div class="p-info">
             <span class="p-label">Battery :</span>
             <span class="p-value">--%</span>
           </div>
         </div>
         <div class="patch-item">
-          <span class="p-icon">📶</span>
+          <span class="p-icon"><IconSignal :size="16" /></span>
           <div class="p-info">
             <span class="p-label">Bluetooth :</span>
             <span class="p-value" :class="{ 'status-active': deviceStore.activeDevice }">
@@ -109,7 +157,7 @@ const handleMouseMove = (e) => {
       <h2 class="section-title">Today's Health</h2>
       <div class="metrics-grid">
         <div class="metric-card bg-red">
-          <span class="m-icon">❤️</span>
+          <span class="m-icon"><IconHeart :size="22" /></span>
           <div class="m-content">
             <span class="m-label">Heart Rate</span>
             <span class="m-value">
@@ -118,21 +166,21 @@ const handleMouseMove = (e) => {
           </div>
         </div>
         <div class="metric-card bg-blue">
-          <span class="m-icon">👶</span>
+          <span class="m-icon"><IconBaby :size="22" /></span>
           <div class="m-content">
             <span class="m-label">Baby Movement</span>
             <span class="m-value">{{ healthStore.latest?.baby_movement || '-' }} <small>Time/Today</small></span>
           </div>
         </div>
         <div class="metric-card bg-orange">
-          <span class="m-icon">🌡️</span>
+          <span class="m-icon"><IconTemperature :size="22" /></span>
           <div class="m-content">
             <span class="m-label">Temperature</span>
             <span class="m-value">{{ healthStore.latest?.temperature ? healthStore.latest.temperature + '°C' : '--°C' }}</span>
           </div>
         </div>
         <div class="metric-card bg-green-light">
-          <span class="m-icon">🙂</span>
+          <span class="m-icon"><IconSmile :size="22" /></span>
           <div class="m-content">
             <span class="m-label">Stress</span>
             <span class="m-value txt-green">{{ healthStore.latest?.stress_level || 'N/A' }}</span>
@@ -179,30 +227,30 @@ const handleMouseMove = (e) => {
     <section class="section-container">
       <h2 class="section-title">Quick Action</h2>
       <div class="action-grid">
-        <button class="act-btn btn-mint" @click="router.push('/monitor')"><span class="act-icon">📈</span> Live Monitor</button>
-        <button class="act-btn btn-purple" @click="router.push('/ai-analysis')"><span class="act-icon">😊</span> AI Analysis</button>
-        <button class="act-btn btn-peach" @click="router.push('/health-report')"><span class="act-icon">📄</span> Report</button>
+        <button class="act-btn btn-mint" @click="router.push('/monitor')"><span class="act-icon"><IconTrendUp :size="20" /></span> Live Monitor</button>
+        <button class="act-btn btn-purple" @click="router.push('/ai-analysis')"><span class="act-icon"><IconSmile :size="20" /></span> AI Analysis</button>
+        <button class="act-btn btn-peach" @click="router.push('/health-report')"><span class="act-icon"><IconDocument :size="20" /></span> Report</button>
         <button class="act-btn btn-rose text-danger" @click="router.push('/emergency')">
-          <span class="act-icon">⚠️</span> Emergency
+          <span class="act-icon"><IconWarning :size="20" /></span> Emergency
         </button>
       </div>
     </section>
 
     <nav class="bottom-nav">
       <button class="nav-item active">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon"><IconHome :size="20" color="#5DC6BA" /></span>
         <span class="nav-label">Home</span>
       </button>
       <button class="nav-item" @click="router.push('/monitor')">
-        <span class="nav-icon">📈</span>
+        <span class="nav-icon"><IconTrendUp :size="20" /></span>
         <span class="nav-label">Monitor</span>
       </button>
       <button class="nav-item" @click="router.push('/ai-analysis')">
-        <span class="nav-icon">😊</span>
+        <span class="nav-icon"><IconSmile :size="20" /></span>
         <span class="nav-label">AI Analysis</span>
       </button>
       <button class="nav-item" @click="router.push('/profile')">
-        <span class="nav-icon">👤</span>
+        <span class="nav-icon"><IconUser :size="20" /></span>
         <span class="nav-label">Profile</span>
       </button>
     </nav>
@@ -215,7 +263,7 @@ const handleMouseMove = (e) => {
   background-color: #fcf8f2;
   width: 100%; /* ยืดเต็มกรอบ */
   height: 100%; /* ยืดเต็มกรอบ */
-  overflow-y: auto; 
+  overflow-y: auto;
   padding: 16px;
   padding-bottom: 110px; /* เว้นระยะหลบ Bottom Nav */
   display: flex;
@@ -223,6 +271,7 @@ const handleMouseMove = (e) => {
   gap: 16px;
   cursor: grab;
   user-select: none;
+  position: relative; /* ให้ notification panel วัดตำแหน่งจาก view นี้ */
 }
 .home-view.active-drag {
   cursor: grabbing;
@@ -284,10 +333,101 @@ const handleMouseMove = (e) => {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 6px;
-  height: 6px;
-  background-color: red;
+  width: 8px;
+  height: 8px;
+  background-color: #FF5A5A;
   border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* Notification Panel */
+.notification-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+.notification-content {
+  width: 85%;
+  max-width: 360px;
+  height: 100%;
+  background: white;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  animation: slideIn 0.3s ease;
+}
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+}
+.notification-header h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #888;
+  cursor: pointer;
+}
+.notification-list {
+  padding: 8px;
+}
+.no-notification {
+  text-align: center;
+  padding: 24px;
+  color: #888;
+  font-size: 14px;
+}
+.notification-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  transition: background 0.2s;
+}
+.notification-item:hover {
+  background: #f9f9f9;
+}
+.notification-item.unread {
+  background: #f0f7ff;
+}
+.notif-icon {
+  width: 32px;
+  height: 32px;
+  background: #d1ebd9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.notif-content {
+  flex: 1;
+}
+.notif-title {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+.notif-time {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
 }
 
 /* Momentum Patch Card */
@@ -322,7 +462,10 @@ const handleMouseMove = (e) => {
   border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
 .p-icon {
-  font-size: 16px;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .p-label {
   font-size: 10px;
@@ -554,9 +697,26 @@ const handleMouseMove = (e) => {
   gap: 4px;
   color: #888;
   cursor: pointer;
+  position: relative;
+  padding: 4px 12px;
+}
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background-color: #5DC6BA;
+  border-radius: 2px;
+  transition: width 0.2s ease;
 }
 .nav-item.active {
-  color: #449284;
+  color: #5DC6BA;
+}
+.nav-item.active::after {
+  width: 24px;
 }
 .nav-icon {
   font-size: 18px;

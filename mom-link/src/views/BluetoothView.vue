@@ -4,6 +4,15 @@ import { useRouter } from 'vue-router'
 import { useDeviceStore } from '@/stores/devices'
 import { useHealthStore } from '@/stores/health'
 import { useUserStore } from '@/stores/user'
+import IconBack from '@/components/icons/IconBack.vue'
+import IconBluetooth from '@/components/icons/IconBluetooth.vue'
+import IconHeart from '@/components/icons/IconHeart.vue'
+import IconTemperature from '@/components/icons/IconTemperature.vue'
+import IconBaby from '@/components/icons/IconBaby.vue'
+import IconWarning from '@/components/icons/IconWarning.vue'
+import IconTrash from '@/components/icons/IconTrash.vue'
+import IconClose from '@/components/icons/IconClose.vue'
+import IconSiren from '@/components/icons/IconSiren.vue'
 
 const router = useRouter()
 const deviceStore = useDeviceStore()
@@ -39,6 +48,11 @@ const selectDevice = async (id) => {
 const addDevice = async () => {
   if (!newDevice.value.name || !newDevice.value.device_type) {
     alert('Name and type are required')
+    return
+  }
+  // Check if device with same mac_address already exists
+  if (newDevice.value.mac_address && deviceStore.devices.some(d => d.mac_address === newDevice.value.mac_address)) {
+    alert('Device already added!')
     return
   }
   try {
@@ -89,13 +103,18 @@ const demoDevices = [
 
 // Emergency test device with ABNORMAL values
 const emergencyDevice = {
-  name: '⚠️ Emergency Test Device',
+  name: 'Emergency Test Device',
   device_type: 'heart_rate_monitor',
   mac_address: '00:00:00:00:00:EMERGENCY',
   is_emergency: true
 }
 
 const addDemoDevice = async (demo) => {
+  // Check if device already exists
+  if (deviceStore.devices.some(d => d.mac_address === demo.mac_address)) {
+    alert('Device already added!')
+    return
+  }
   try {
     const device = await deviceStore.addDevice({
       name: demo.name,
@@ -117,9 +136,7 @@ const addDemoDevice = async (demo) => {
       }
       await healthStore.addLog(data)
     }
-
-    // Refresh devices list
-    await deviceStore.fetchDevices()
+    // Don't call fetchDevices() - it would reset local state
   } catch (err) {
     alert('Failed to add device: ' + err.message)
   }
@@ -127,6 +144,11 @@ const addDemoDevice = async (demo) => {
 
 // Add emergency test device with ABNORMAL values
 const addEmergencyDevice = async () => {
+  // Check if emergency device already exists
+  if (deviceStore.devices.some(d => d.mac_address === emergencyDevice.mac_address)) {
+    alert('Emergency device already added!')
+    return
+  }
   try {
     const device = await deviceStore.addDevice({
       name: emergencyDevice.name,
@@ -149,22 +171,13 @@ const addEmergencyDevice = async () => {
       }
       await healthStore.addLog(data)
     }
-
-    // Refresh devices list
-    await deviceStore.fetchDevices()
   } catch (err) {
     alert('Failed to add device: ' + err.message)
   }
 }
 
 const getDeviceIcon = (type) => {
-  const icons = {
-    heart_rate_monitor: '❤️',
-    temperature_sensor: '🌡️',
-    movement_sensor: '👶',
-    default: '🌀'
-  }
-  return icons[type] || icons.default
+  return IconBluetooth // fallback - we use IconBluetooth directly in template now
 }
 
 const scrollContainer = ref(null)
@@ -198,26 +211,26 @@ const handleMouseMove = (e) => {
     <!-- Emergency Alert Overlay -->
     <div v-if="showEmergencyAlert" class="emergency-overlay">
       <div class="emergency-alert-box">
-        <div class="emergency-icon">🚨</div>
+        <div class="emergency-icon"><IconSiren :size="80" color="white" /></div>
         <div class="emergency-text">DANGER!</div>
         <div class="emergency-sub">Abnormal Vital Signs Detected</div>
         <div class="emergency-values">
-          <div class="emergency-value danger">❤️ HR: 170-200 bpm</div>
-          <div class="emergency-value warning">🌡️ Temp: 37.8-39°C</div>
-          <div class="emergency-value warning">👶 Movement: 0-2</div>
+          <div class="emergency-value danger"><IconHeart :size="16" color="#ffcccc" /> HR: 170-200 bpm</div>
+          <div class="emergency-value warning"><IconTemperature :size="16" color="#ffddcc" /> Temp: 37.8-39°C</div>
+          <div class="emergency-value warning"><IconBaby :size="16" color="#ffddcc" /> Movement: 0-2</div>
         </div>
         <button class="emergency-action-btn" @click="router.push('/emergency')">
-          🚨 Go to Emergency
+          <IconWarning :size="18" color="#d9534f" /> Go to Emergency
         </button>
         <button class="emergency-dismiss-btn" @click="showEmergencyAlert = false">
-          ✕ Dismiss
+          <IconClose :size="14" color="white" /> Dismiss
         </button>
       </div>
     </div>
 
     <!-- Header -->
     <header class="app-header">
-      <button class="back-btn" @click="goBack">❮</button>
+      <button class="back-btn" @click="goBack"><IconBack :size="16" /></button>
       <h1>Bluetooth Devices</h1>
       <div style="width: 32px"></div>
     </header>
@@ -226,7 +239,7 @@ const handleMouseMove = (e) => {
     <section class="card active-device" v-if="deviceStore.activeDevice">
       <h3>Currently Connected</h3>
       <div class="active-info">
-        <span class="device-icon-lg">{{ getDeviceIcon(deviceStore.activeDevice.device_type) }}</span>
+        <span class="device-icon-lg"><IconBluetooth :size="40" /></span>
         <div class="device-details">
           <span class="device-name">{{ deviceStore.activeDevice.name }}</span>
           <span class="device-type-label">{{ deviceStore.activeDevice.device_type }}</span>
@@ -238,7 +251,7 @@ const handleMouseMove = (e) => {
     <!-- Scan Button -->
     <section class="card scan-section">
       <button class="scan-btn" @click="scanBluetooth" :disabled="isScanning">
-        {{ isScanning ? '🔍 Scanning...' : '🔍 Scan Real Device' }}
+        <IconBluetooth :size="16" color="white" /> {{ isScanning ? 'Scanning...' : 'Scan Real Device' }}
       </button>
       <p class="or-divider">— or —</p>
       <div class="demo-devices">
@@ -250,10 +263,10 @@ const handleMouseMove = (e) => {
             class="demo-btn"
             @click="addDemoDevice(demo)"
           >
-            {{ getDeviceIcon(demo.device_type) }} {{ demo.name }}
+            <IconBluetooth :size="14" /> {{ demo.name }}
           </button>
           <button class="demo-btn emergency-btn" @click="addEmergencyDevice">
-            ⚠️ Emergency Test Device
+            <IconWarning :size="14" color="#d9534f" /> Emergency Test Device
           </button>
         </div>
       </div>
@@ -270,7 +283,7 @@ const handleMouseMove = (e) => {
           :class="{ active: device.is_active }"
         >
           <div class="device-left">
-            <span class="device-icon">{{ getDeviceIcon(device.device_type) }}</span>
+            <span class="device-icon"><IconBluetooth :size="24" /></span>
             <div class="device-info">
               <span class="device-name">{{ device.name }}</span>
               <span class="device-type">{{ device.device_type }}</span>
@@ -282,7 +295,7 @@ const handleMouseMove = (e) => {
               class="select-btn"
               @click="selectDevice(device.id)"
             >Select</button>
-            <button class="delete-btn" @click="deleteDevice(device.id)">🗑️</button>
+            <button class="delete-btn" @click="deleteDevice(device.id)"><IconTrash :size="14" /></button>
           </div>
         </div>
       </div>

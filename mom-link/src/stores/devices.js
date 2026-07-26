@@ -15,16 +15,13 @@ export const useDeviceStore = defineStore('devices', () => {
     error.value = null
     try {
       const data = await api.getDevices(userStore.user?.id || userStore.DEMO_USER_ID)
-      devices.value = data
-      activeDevice.value = data.find(d => d.is_active) || null
+      devices.value = data || []
+      activeDevice.value = devices.value.find(d => d.is_active) || devices.value[0] || null
     } catch (err) {
       error.value = err.message
-      // Mock devices
-      devices.value = [
-        { id: 1, name: 'Heart Rate Monitor', device_type: 'heart_rate_monitor', is_active: 1 },
-        { id: 2, name: 'Temp Sensor', device_type: 'temperature_sensor', is_active: 0 },
-      ]
-      activeDevice.value = devices.value.find(d => d.is_active) || devices.value[0]
+      // Clear devices on error - don't use mock data
+      devices.value = []
+      activeDevice.value = null
     } finally {
       loading.value = false
     }
@@ -36,6 +33,10 @@ export const useDeviceStore = defineStore('devices', () => {
     try {
       const result = await api.addDevice({ ...data, user_id: userStore.user?.id || userStore.DEMO_USER_ID })
       devices.value.push(result)
+      if (!activeDevice.value) {
+        activeDevice.value = result
+        result.is_active = 1
+      }
       return result
     } catch (err) {
       error.value = err.message
@@ -61,6 +62,7 @@ export const useDeviceStore = defineStore('devices', () => {
   }
 
   const deleteDevice = async (id) => {
+    const userStore = useUserStore()
     loading.value = true
     try {
       await api.deleteDevice(id)
