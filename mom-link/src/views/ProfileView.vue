@@ -34,6 +34,7 @@ onMounted(async () => {
 })
 
 const startEdit = () => {
+  if (!userStore.user) return
   editForm.value = { ...userStore.user }
   isEditing.value = true
 }

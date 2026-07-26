@@ -52,9 +52,21 @@ router.put('/:id/set-active', (req, res) => {
 // PUT /api/devices/:id
 router.put('/:id', (req, res) => {
   const { name, mac_address } = req.body;
-  const result = db.prepare(
-    'UPDATE bluetooth_devices SET name = COALESCE(?, name), mac_address = COALESCE(?, mac_address) WHERE id = ?'
-  ).run(name, mac_address, req.params.id);
+
+  if (name === undefined && mac_address === undefined) {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  const fields = [];
+  const values = [];
+
+  if (name !== undefined) { fields.push('name = ?'); values.push(name); }
+  if (mac_address !== undefined) { fields.push('mac_address = ?'); values.push(mac_address); }
+
+  values.push(req.params.id);
+
+  const query = `UPDATE bluetooth_devices SET ${fields.join(', ')} WHERE id = ?`;
+  const result = db.prepare(query).run(...values);
   if (result.changes === 0) return res.status(404).json({ error: 'Device not found' });
   res.json({ id: req.params.id, message: 'Device updated successfully' });
 });

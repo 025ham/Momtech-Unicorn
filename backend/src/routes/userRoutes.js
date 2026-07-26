@@ -54,19 +54,29 @@ router.post('/login', (req, res) => {
 // PUT /api/users/:id
 router.put('/:id', (req, res) => {
   const { name, age, pregnancy_week, due_date, hospital, doctor, blood_type, allergies } = req.body;
-  const result = db.prepare(`
-    UPDATE users SET
-      name = COALESCE(?, name),
-      age = COALESCE(?, age),
-      pregnancy_week = COALESCE(?, pregnancy_week),
-      due_date = COALESCE(?, due_date),
-      hospital = COALESCE(?, hospital),
-      doctor = COALESCE(?, doctor),
-      blood_type = COALESCE(?, blood_type),
-      allergies = COALESCE(?, allergies),
-      updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).run(name, age, pregnancy_week, due_date, hospital, doctor, blood_type, allergies, req.params.id);
+
+  // Build dynamic update query - only update fields that are explicitly provided
+  const fields = [];
+  const values = [];
+
+  if (name !== undefined) { fields.push('name = ?'); values.push(name); }
+  if (age !== undefined) { fields.push('age = ?'); values.push(age); }
+  if (pregnancy_week !== undefined) { fields.push('pregnancy_week = ?'); values.push(pregnancy_week); }
+  if (due_date !== undefined) { fields.push('due_date = ?'); values.push(due_date); }
+  if (hospital !== undefined) { fields.push('hospital = ?'); values.push(hospital); }
+  if (doctor !== undefined) { fields.push('doctor = ?'); values.push(doctor); }
+  if (blood_type !== undefined) { fields.push('blood_type = ?'); values.push(blood_type); }
+  if (allergies !== undefined) { fields.push('allergies = ?'); values.push(allergies); }
+
+  if (fields.length === 0) {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  fields.push('updated_at = CURRENT_TIMESTAMP');
+  values.push(req.params.id);
+
+  const query = `UPDATE users SET ${fields.join(', ')} WHERE id = ?`;
+  const result = db.prepare(query).run(...values);
   if (result.changes === 0) return res.status(404).json({ error: 'User not found' });
   res.json({ id: req.params.id, message: 'Profile updated successfully' });
 });

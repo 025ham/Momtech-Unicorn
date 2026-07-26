@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '../api/index.js'
 import { useUserStore } from './user.js'
+import { useDeviceStore } from './devices.js'
 
 export const useHealthStore = defineStore('health', () => {
   const logs = ref([])
@@ -10,16 +11,10 @@ export const useHealthStore = defineStore('health', () => {
   const loading = ref(false)
   const error = ref(null)
 
-  // Check if active device is emergency (lazy import to avoid circular dependency)
   const isEmergencyDevice = () => {
-    try {
-      const { useDeviceStore } = require('./devices.js')
-      const deviceStore = useDeviceStore()
-      return deviceStore.activeDevice?.name?.includes('Emergency') ||
-             deviceStore.activeDevice?.is_emergency
-    } catch (e) {
-      return false
-    }
+    const deviceStore = useDeviceStore()
+    return deviceStore.activeDevice?.name?.includes('Emergency') ||
+           deviceStore.activeDevice?.is_emergency
   }
 
   const fetchLogs = async (limit = 100) => {

@@ -21,7 +21,6 @@ onMounted(async () => {
   ])
 })
 
-// goBack function removed (not used in template)
 const healthScore = computed(() => healthStore.stats?.avg_heart_rate ? 97 : (healthStore.latest?.heart_rate ? Math.round((healthStore.latest.heart_rate / 180) * 100) : '--'))
 const riskLevel = ref('Low')
 const riskLevelColor = ref('#00a86b')

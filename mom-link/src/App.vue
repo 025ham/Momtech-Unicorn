@@ -18,6 +18,7 @@ import { RouterView } from 'vue-router'
 html, body {
   background-color: #e5e5e5;
   min-height: 100vh;
+  width: 100%;
 }
 
 body {
@@ -38,9 +39,19 @@ body {
 }
 
 @media (max-width: 430px) {
+  html, body {
+    background-color: #fcf8f2;
+  }
+
+  body {
+    justify-content: flex-start;
+  }
+
   .phone-wrapper {
     width: 100%;
+    min-height: 100vh;
     border-radius: 0;
+    box-shadow: none;
   }
 }
 </style>

@@ -170,7 +170,7 @@ const handleMouseMove = (e) => {
               <span class="contact-number">{{ contact.phone }}</span>
             </div>
           </div>
-          <button class="call-btn" @click="callNumber(contact.phone)">📞</button>
+          <button class="call-btn" @click="callNumber(contact.phone)"><IconPhone :size="16" /></button>
         </div>
       </div>
     </section>

@@ -1,8 +1,0 @@
-{
-  "appId": "com.momtech.momlink",
-  "appName": "MomLink",
-  "webDir": "dist",
-  "server": {
-    "androidScheme": "https"
-  }
-}

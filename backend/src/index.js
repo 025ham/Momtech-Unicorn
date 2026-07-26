@@ -7,6 +7,7 @@ import userRoutes from './routes/userRoutes.js';
 import deviceRoutes from './routes/deviceRoutes.js';
 import healthLogRoutes from './routes/healthLogRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
+import { initDb } from './db/connection.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -24,6 +25,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+async function start() {
+  await initDb();
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+}
+
+start();

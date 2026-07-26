@@ -30,9 +30,22 @@ router.post('/', (req, res) => {
 // PUT /api/contacts/:id
 router.put('/:id', (req, res) => {
   const { name, phone, contact_type } = req.body;
-  const result = db.prepare(
-    'UPDATE emergency_contacts SET name = COALESCE(?, name), phone = COALESCE(?, phone), contact_type = COALESCE(?, contact_type) WHERE id = ?'
-  ).run(name, phone, contact_type, req.params.id);
+
+  if (name === undefined && phone === undefined && contact_type === undefined) {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  const fields = [];
+  const values = [];
+
+  if (name !== undefined) { fields.push('name = ?'); values.push(name); }
+  if (phone !== undefined) { fields.push('phone = ?'); values.push(phone); }
+  if (contact_type !== undefined) { fields.push('contact_type = ?'); values.push(contact_type); }
+
+  values.push(req.params.id);
+
+  const query = `UPDATE emergency_contacts SET ${fields.join(', ')} WHERE id = ?`;
+  const result = db.prepare(query).run(...values);
   if (result.changes === 0) return res.status(404).json({ error: 'Contact not found' });
   res.json({ id: req.params.id, message: 'Contact updated successfully' });
 });

@@ -13,6 +13,10 @@ import IconWarning from '@/components/icons/IconWarning.vue'
 import IconTrash from '@/components/icons/IconTrash.vue'
 import IconClose from '@/components/icons/IconClose.vue'
 import IconSiren from '@/components/icons/IconSiren.vue'
+import IconHome from '@/components/icons/IconHome.vue'
+import IconTrendUp from '@/components/icons/IconTrendUp.vue'
+import IconSmile from '@/components/icons/IconSmile.vue'
+import IconUser from '@/components/icons/IconUser.vue'
 
 const router = useRouter()
 const deviceStore = useDeviceStore()
@@ -176,10 +180,6 @@ const addEmergencyDevice = async () => {
   }
 }
 
-const getDeviceIcon = (type) => {
-  return IconBluetooth // fallback - we use IconBluetooth directly in template now
-}
-
 const scrollContainer = ref(null)
 let isDown = false, startY, scrollTop
 
@@ -327,6 +327,26 @@ const handleMouseMove = (e) => {
         <button class="btn-add" @click="addDevice">Add Device</button>
       </div>
     </section>
+
+    <!-- Bottom Nav-->
+    <nav class="bottom-nav">
+      <button class="nav-item" @click="router.push('/')">
+        <span class="nav-icon"><IconHome :size="20" /></span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-item" @click="router.push('/monitor')">
+        <span class="nav-icon"><IconTrendUp :size="20" /></span>
+        <span class="nav-label">Monitor</span>
+      </button>
+      <button class="nav-item" @click="router.push('/ai-analysis')">
+        <span class="nav-icon"><IconSmile :size="20" /></span>
+        <span class="nav-label">AI Analysis</span>
+      </button>
+      <button class="nav-item" @click="router.push('/profile')">
+        <span class="nav-icon"><IconUser :size="20" /></span>
+        <span class="nav-label">Profile</span>
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -337,7 +357,7 @@ const handleMouseMove = (e) => {
   height: 100%;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: 40px;
+  padding-bottom: 110px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -502,4 +522,47 @@ const handleMouseMove = (e) => {
   font-size: 14px;
   cursor: pointer;
 }
+
+/* Bottom Nav */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 0 24px 0;
+  border-top: 1px solid #f0eae1;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+  z-index: 100;
+}
+.nav-item {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #888;
+  cursor: pointer;
+  position: relative;
+  padding: 4px 12px;
+}
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background-color: #5DC6BA;
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+.nav-item.active { color: #5DC6BA; }
+.nav-item.active::after { width: 24px; }
+.nav-icon { font-size: 18px; }
+.nav-label { font-size: 10px; font-weight: 500; }
 </style>
