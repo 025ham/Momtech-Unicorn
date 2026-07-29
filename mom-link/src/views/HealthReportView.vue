@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
+import { useContactStore } from '@/stores/contacts'
+import { useUserStore } from '@/stores/user'
 import IconBack from '@/components/icons/IconBack.vue'
 import IconHeart from '@/components/icons/IconHeart.vue'
 import IconBaby from '@/components/icons/IconBaby.vue'
@@ -12,12 +14,18 @@ import IconHome from '@/components/icons/IconHome.vue'
 import IconTrendUp from '@/components/icons/IconTrendUp.vue'
 import IconSmile from '@/components/icons/IconSmile.vue'
 import IconUser from '@/components/icons/IconUser.vue'
+import IconDoctor from '@/components/icons/IconDoctor.vue'
+import IconPhone from '@/components/icons/IconPhone.vue'
+import IconClose from '@/components/icons/IconClose.vue'
 
 const router = useRouter()
 const healthStore = useHealthStore()
+const contactStore = useContactStore()
+const userStore = useUserStore()
 
-onMounted(() => {
-  healthStore.fetchLogs(100)
+onMounted(async () => {
+  await healthStore.fetchLogs(100)
+  await userStore.fetchUser()
 })
 
 const goBack = () => {
@@ -28,10 +36,35 @@ const goBack = () => {
 const activeFilter = ref('today')
 const filters = ['today', 'week', 'month']
 
-// Real data from store
-const heartRateData = computed(() => healthStore.logs.map(l => l.heart_rate).filter(Boolean))
-const movementData = computed(() => healthStore.logs.map(l => l.baby_movement).filter(Boolean))
-const temperatureData = computed(() => healthStore.logs.map(l => l.temperature).filter(Boolean))
+const setFilter = (filter) => {
+  activeFilter.value = filter
+  applyFilter()
+}
+
+// Apply time filter to logs
+const applyFilter = () => {
+  const logs = healthStore.logs
+  if (!logs.length) return []
+
+  const now = new Date()
+  let cutoffDate = new Date()
+
+  if (activeFilter.value === 'today') {
+    cutoffDate.setHours(0, 0, 0, 0)
+  } else if (activeFilter.value === 'week') {
+    cutoffDate.setDate(now.getDate() - 7)
+  } else if (activeFilter.value === 'month') {
+    cutoffDate.setMonth(now.getMonth() - 1)
+  }
+
+  return logs.filter(l => new Date(l.logged_at) >= cutoffDate)
+}
+
+// Real data from store with filter applied
+const filteredLogs = computed(() => applyFilter())
+const heartRateData = computed(() => filteredLogs.value.map(l => l.heart_rate).filter(Boolean))
+const movementData = computed(() => filteredLogs.value.map(l => l.baby_movement).filter(Boolean))
+const temperatureData = computed(() => filteredLogs.value.map(l => l.temperature).filter(Boolean))
 
 const maxHR = 180
 const minHR = 60
@@ -85,6 +118,143 @@ const doctorReports = ref([
   { date: '2024-08-15', comment: 'Everything looks normal. See you in 4 weeks.', doctor: 'Dr. Maria Chen' },
 ])
 
+// Share to Doctor modal
+const showShareModal = ref(false)
+const doctorContacts = computed(() => contactStore.contacts.filter(c => c.contact_type === 'doctor'))
+
+const openShareModal = async () => {
+  await contactStore.fetchContacts()
+  showShareModal.value = true
+}
+
+const shareToDoctor = (doctor) => {
+  const logs = filteredLogs.value
+  const summary = `Health Report - MomLink\nDate: ${new Date().toLocaleDateString()}\nPeriod: ${activeFilter.value}\n========================\nHeart Rate: ${logs[0]?.heart_rate || '-'} bpm\nTemperature: ${logs[0]?.temperature || '-'}°C\nBaby Movement: ${logs[0]?.baby_movement || '-'} times\nStress Level: ${logs[0]?.stress_level || '-'}\n========================\nPatient: ${userStore.user?.name || 'N/A'}\nAge: ${userStore.user?.age || 'N/A'}\nPregnancy Week: ${userStore.user?.pregnancy_week || 'N/A'}\nHospital: ${userStore.user?.hospital || 'N/A'}\nDoctor: ${userStore.user?.doctor || 'N/A'}`
+
+  if (navigator.share) {
+    navigator.share({ title: 'MomLink Health Report', text: summary }).catch(() => {})
+  } else {
+    window.location.href = `tel:${doctor.phone}`
+  }
+  showShareModal.value = false
+}
+
+// PDF Download
+const downloadPDF = () => {
+  const logs = filteredLogs.value
+  const user = userStore.user || {}
+
+  // Build HTML content for PDF
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Health Report - MomLink</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 3px solid #5DC6BA; padding-bottom: 20px; margin-bottom: 30px; }
+    .header h1 { color: #5DC6BA; margin: 0 0 5px 0; font-size: 28px; }
+    .header h2 { color: #333; margin: 0; font-size: 18px; font-weight: normal; }
+    .patient-info { background: #f5f5f5; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
+    .patient-info h3 { margin: 0 0 15px 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .info-item { display: flex; justify-content: space-between; padding: 5px 0; }
+    .info-label { color: #666; }
+    .info-value { font-weight: bold; color: #333; }
+    .section { margin-bottom: 30px; }
+    .section h3 { color: #333; border-bottom: 2px solid #5DC6BA; padding-bottom: 10px; margin-bottom: 15px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+    .stat-card { background: #f9f9f9; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #eee; }
+    .stat-value { font-size: 24px; font-weight: bold; color: #5DC6BA; }
+    .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
+    .log-table { width: 100%; border-collapse: collapse; }
+    .log-table th { background: #5DC6BA; color: white; padding: 10px; text-align: left; }
+    .log-table td { padding: 10px; border-bottom: 1px solid #eee; }
+    .log-table tr:nth-child(even) { background: #f9f9f9; }
+    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #888; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>MomLink</h1>
+    <h2>Health Report</h2>
+  </div>
+
+  <div class="patient-info">
+    <h3>Patient Information</h3>
+    <div class="info-grid">
+      <div class="info-item"><span class="info-label">Name:</span><span class="info-value">${user.name || 'N/A'}</span></div>
+      <div class="info-item"><span class="info-label">Age:</span><span class="info-value">${user.age || 'N/A'} years</span></div>
+      <div class="info-item"><span class="info-label">Pregnancy Week:</span><span class="info-value">Week ${user.pregnancy_week || 'N/A'}</span></div>
+      <div class="info-item"><span class="info-label">Blood Type:</span><span class="info-value">${user.blood_type || 'N/A'}</span></div>
+      <div class="info-item"><span class="info-label">Due Date:</span><span class="info-value">${user.due_date || 'N/A'}</span></div>
+      <div class="info-item"><span class="info-label">Hospital:</span><span class="info-value">${user.hospital || 'N/A'}</span></div>
+      <div class="info-item"><span class="info-label">Doctor:</span><span class="info-value">${user.doctor || 'N/A'}</span></div>
+      <div class="info-item"><span class="info-label">Allergies:</span><span class="info-value">${user.allergies || 'None'}</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Health Summary (${activeFilter.value})</h3>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">${logs[0]?.heart_rate || '-'}</div>
+        <div class="stat-label">Heart Rate (bpm)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${logs[0]?.temperature || '-'}</div>
+        <div class="stat-label">Temperature (°C)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${logs[0]?.baby_movement || '-'}</div>
+        <div class="stat-label">Baby Movement</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Health Logs</h3>
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Date/Time</th>
+          <th>Heart Rate</th>
+          <th>Temperature</th>
+          <th>Baby Movement</th>
+          <th>Stress Level</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${logs.slice(0, 20).map(l => `
+        <tr>
+          <td>${l.logged_at ? new Date(l.logged_at).toLocaleString() : 'N/A'}</td>
+          <td>${l.heart_rate || '-'}</td>
+          <td>${l.temperature || '-'}</td>
+          <td>${l.baby_movement || '-'}</td>
+          <td>${l.stress_level || 'N/A'}</td>
+        </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    Generated by MomLink Health App on ${new Date().toLocaleDateString()}
+  </div>
+</body>
+</html>
+  `
+
+  // Open in new window for printing/saving as PDF
+  const printWindow = window.open('', '_blank')
+  printWindow.document.write(htmlContent)
+  printWindow.document.close()
+  printWindow.onload = () => {
+    printWindow.print()
+  }
+}
+
 const scrollContainer = ref(null)
 let isDown = false
 let startY, scrollTop
@@ -129,7 +299,7 @@ const handleMouseMove = (e) => {
         :key="f"
         class="filter-btn"
         :class="{ active: activeFilter === f }"
-        @click="activeFilter = f"
+        @click="setFilter(f)"
       >
         {{ f.charAt(0).toUpperCase() + f.slice(1) }}
       </button>
@@ -202,10 +372,45 @@ const handleMouseMove = (e) => {
         </div>
       </div>
       <div class="report-actions">
-        <button class="report-btn btn-download"><IconDownload :size="14" /> Download PDF</button>
-        <button class="report-btn btn-share"><IconShare :size="14" /> Share to Doctor</button>
+        <button class="report-btn btn-download" @click="downloadPDF"><IconDownload :size="14" /> Download PDF</button>
+        <button class="report-btn btn-share" @click="openShareModal"><IconShare :size="14" /> Share to Doctor</button>
       </div>
     </section>
+
+    <!-- Share to Doctor Modal -->
+    <div v-if="showShareModal" class="share-modal-overlay" @click="showShareModal = false">
+      <div class="share-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Share to Doctor</h3>
+          <button class="close-btn" @click="showShareModal = false"><IconClose :size="18" /></button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">Select a doctor to share your health report</p>
+          <div v-if="doctorContacts.length === 0" class="no-contacts">
+            No doctor contacts found
+          </div>
+          <div v-for="doctor in doctorContacts" :key="doctor.id" class="doctor-item" @click="shareToDoctor(doctor)">
+            <div class="doctor-icon"><IconDoctor :size="24" /></div>
+            <div class="doctor-info">
+              <span class="doctor-name">{{ doctor.name }}</span>
+              <span class="doctor-phone">{{ doctor.phone }}</span>
+            </div>
+            <button class="call-btn"><IconPhone :size="16" /></button>
+          </div>
+          <div v-if="!doctorContacts.length" class="all-contacts">
+            <p class="modal-desc">Other contacts:</p>
+            <div v-for="contact in contactStore.contacts" :key="contact.id" class="doctor-item" @click="shareToDoctor(contact)">
+              <div class="doctor-icon"><IconDoctor :size="24" /></div>
+              <div class="doctor-info">
+                <span class="doctor-name">{{ contact.name }}</span>
+                <span class="doctor-phone">{{ contact.phone }}</span>
+              </div>
+              <button class="call-btn"><IconPhone :size="16" /></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Bottom Nav-->
     <nav class="bottom-nav">
@@ -377,6 +582,102 @@ const handleMouseMove = (e) => {
 }
 .btn-download { background: #d6e2f9; color: #2b5c8f; }
 .btn-share { background: #d1ebd9; color: #2e6b5e; }
+
+/* Share Modal */
+.share-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.share-modal {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 340px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+}
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+}
+.modal-body {
+  padding: 16px;
+}
+.modal-desc {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+}
+.no-contacts {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+  font-size: 13px;
+}
+.doctor-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.doctor-item:hover {
+  background: #f0f7ff;
+}
+.doctor-icon {
+  width: 40px;
+  height: 40px;
+  background: #d1ebd9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.doctor-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.doctor-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+.doctor-phone {
+  font-size: 12px;
+  color: #888;
+}
+.all-contacts {
+  margin-top: 16px;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
 
 /* Bottom Nav */
 .bottom-nav {

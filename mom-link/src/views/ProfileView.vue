@@ -53,9 +53,32 @@ const saveProfile = async () => {
   }
 }
 
-const exportData = () => {
-  const url = healthStore.getExportUrl()
-  window.open(url, '_blank')
+const exportData = async () => {
+  await healthStore.fetchLogs(500)
+  showExportModal.value = true
+}
+
+const showExportModal = ref(false)
+
+const downloadCSV = () => {
+  const logs = healthStore.logs
+  const headers = ['Date/Time', 'Heart Rate', 'Temperature', 'Baby Movement', 'Stress Level']
+  const rows = logs.map(l => [
+    l.logged_at ? new Date(l.logged_at).toLocaleString() : '',
+    l.heart_rate || '',
+    l.temperature || '',
+    l.baby_movement || '',
+    l.stress_level || ''
+  ])
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `momlink-health-data-${new Date().toISOString().split('T')[0]}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+  showExportModal.value = false
 }
 
 const scrollContainer = ref(null)
@@ -180,6 +203,45 @@ const handleMouseMove = (e) => {
       <button class="export-btn" @click="exportData"><IconDownload :size="16" /> Export Data</button>
     </section>
 
+    <!-- Export Data Modal -->
+    <div v-if="showExportModal" class="export-modal-overlay" @click="showExportModal = false">
+      <div class="export-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Export Health Data</h3>
+          <button class="close-btn" @click="showExportModal = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">Your health data ({{ healthStore.logs.length }} records)</p>
+          <div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date/Time</th>
+                  <th>Heart Rate</th>
+                  <th>Temp</th>
+                  <th>Movement</th>
+                  <th>Stress</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="log in healthStore.logs.slice(0, 50)" :key="log.id">
+                  <td>{{ log.logged_at ? new Date(log.logged_at).toLocaleString() : '-' }}</td>
+                  <td>{{ log.heart_rate || '-' }}</td>
+                  <td>{{ log.temperature || '-' }}</td>
+                  <td>{{ log.baby_movement || '-' }}</td>
+                  <td>{{ log.stress_level || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p v-if="healthStore.logs.length > 50" class="more-data">... and {{ healthStore.logs.length - 50 }} more records</p>
+          <button class="download-csv-btn" @click="downloadCSV">
+            <IconDownload :size="16" /> Download CSV
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Account Actions -->
     <section class="card account-card">
       <button class="account-btn btn-logout"><IconLogout :size="16" /> Logout</button>
@@ -272,6 +334,103 @@ const handleMouseMove = (e) => {
 .export-card { text-align: center; }
 .export-desc { font-size: 12px; color: #888; margin-bottom: 10px; }
 .export-btn { background: #449284; color: white; border: none; border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; }
+
+/* Export Modal */
+.export-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.export-modal {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+}
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #888;
+}
+.modal-body {
+  padding: 16px;
+}
+.modal-desc {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+}
+.data-table {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.data-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.data-table th {
+  background: #449284;
+  color: white;
+  padding: 8px 6px;
+  text-align: left;
+  position: sticky;
+  top: 0;
+}
+.data-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #eee;
+}
+.data-table tr:nth-child(even) {
+  background: #f9f9f9;
+}
+.more-data {
+  font-size: 11px;
+  color: #888;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.download-csv-btn {
+  width: 100%;
+  background: #449284;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
 
 .account-btn { width: 100%; background: none; border: none; padding: 14px; font-size: 14px; font-weight: 500; color: #333; cursor: pointer; border-radius: 12px; text-align: left; }
 .btn-logout { color: #d9534f; }

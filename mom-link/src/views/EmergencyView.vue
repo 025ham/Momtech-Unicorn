@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useContactStore } from '@/stores/contacts'
 import { useUserStore } from '@/stores/user'
+import { useNotificationStore } from '@/stores/notifications'
 import IconBack from '@/components/icons/IconBack.vue'
 import IconWarning from '@/components/icons/IconWarning.vue'
 import IconSiren from '@/components/icons/IconSiren.vue'
@@ -18,6 +19,7 @@ import IconUser from '@/components/icons/IconUser.vue'
 const router = useRouter()
 const contactStore = useContactStore()
 const userStore = useUserStore()
+const notificationStore = useNotificationStore()
 
 const goBack = () => router.push('/')
 
@@ -33,6 +35,12 @@ onMounted(async () => {
 const triggerSOS = () => {
   showSosAlert.value = true
   sosActive.value = true
+
+  // Add emergency notification to store
+  notificationStore.addNotification({
+    title: '🚨 SOS Emergency Alert Sent!',
+    is_emergency: true,
+  })
 
   // Auto hide after 5 seconds
   setTimeout(() => {

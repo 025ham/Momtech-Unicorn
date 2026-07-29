@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import db from '../db/connection.js';
+import { queryAll, queryGet, queryRun } from '../db/connection.js';
 
 const router = Router();
 
@@ -7,7 +7,7 @@ const router = Router();
 router.get('/', (req, res) => {
   const { user_id } = req.query;
   if (!user_id) return res.status(400).json({ error: 'user_id is required' });
-  const contacts = db.prepare('SELECT * FROM emergency_contacts WHERE user_id = ? ORDER BY contact_type, name').all(user_id);
+  const contacts = queryAll('SELECT * FROM emergency_contacts WHERE user_id = ? ORDER BY contact_type, name', [user_id]);
   res.json(contacts);
 });
 
@@ -18,9 +18,10 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'user_id, name, phone, contact_type are required' });
   }
   try {
-    const result = db.prepare(
-      'INSERT INTO emergency_contacts (user_id, name, phone, contact_type) VALUES (?, ?, ?, ?)'
-    ).run(user_id, name, phone, contact_type);
+    const result = queryRun(
+      'INSERT INTO emergency_contacts (user_id, name, phone, contact_type) VALUES (?, ?, ?, ?)',
+      [user_id, name, phone, contact_type]
+    );
     res.status(201).json({ id: result.lastInsertRowid, user_id, name, phone, contact_type });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -45,14 +46,14 @@ router.put('/:id', (req, res) => {
   values.push(req.params.id);
 
   const query = `UPDATE emergency_contacts SET ${fields.join(', ')} WHERE id = ?`;
-  const result = db.prepare(query).run(...values);
+  const result = queryRun(query, values);
   if (result.changes === 0) return res.status(404).json({ error: 'Contact not found' });
   res.json({ id: req.params.id, message: 'Contact updated successfully' });
 });
 
 // DELETE /api/contacts/:id
 router.delete('/:id', (req, res) => {
-  const result = db.prepare('DELETE FROM emergency_contacts WHERE id = ?').run(req.params.id);
+  const result = queryRun('DELETE FROM emergency_contacts WHERE id = ?', [req.params.id]);
   if (result.changes === 0) return res.status(404).json({ error: 'Contact not found' });
   res.json({ message: 'Contact deleted successfully' });
 });

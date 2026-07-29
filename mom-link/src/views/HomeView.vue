@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
 import { useUserStore } from '@/stores/user'
 import { useDeviceStore } from '@/stores/devices'
+import { useNotificationStore } from '@/stores/notifications'
 import IconWave from '@/components/icons/IconWave.vue'
 import IconBell from '@/components/icons/IconBell.vue'
 import IconSettings from '@/components/icons/IconSettings.vue'
@@ -24,18 +25,22 @@ const router = useRouter()
 const healthStore = useHealthStore()
 const userStore = useUserStore()
 const deviceStore = useDeviceStore()
+const notificationStore = useNotificationStore()
 
-// Notification system
+// Notification system (from store)
 const showNotifications = ref(false)
-const notifications = ref([
-  { title: 'Remember your checkup tomorrow', time: '2 hours ago', read: false },
-  { title: 'Baby movement detected', time: '5 hours ago', read: true },
-])
-const hasUnread = computed(() => notifications.value.some(n => !n.read))
+const notifications = computed(() => notificationStore.notifications)
+const hasUnread = computed(() => notificationStore.getUnreadCount() > 0)
+
+const markAsRead = (id) => notificationStore.markAsRead(id)
+const markAllAsRead = () => notificationStore.markAllAsRead()
 
 onMounted(async () => {
+  // Start simulation if no data exists - shared across all views
+  if (!healthStore.latest) {
+    healthStore.startSimulation()
+  }
   await Promise.all([
-    healthStore.fetchLatest(),
     healthStore.fetchStats(),
     userStore.fetchUser(),
     deviceStore.fetchDevices(),
@@ -105,18 +110,22 @@ const handleMouseMove = (e) => {
       <div class="notification-content" @click.stop>
         <div class="notification-header">
           <h3>Notifications</h3>
-          <button class="close-btn" @click="showNotifications = false">✕</button>
+          <div class="header-actions">
+            <button class="mark-all-btn" @click="markAllAsRead">Mark all read</button>
+            <button class="close-btn" @click="showNotifications = false">✕</button>
+          </div>
         </div>
         <div class="notification-list">
           <div v-if="notifications.length === 0" class="no-notification">
             No new notifications
           </div>
-          <div v-for="(notif, idx) in notifications" :key="idx" class="notification-item" :class="{ unread: !notif.read }">
-            <div class="notif-icon"><IconBell :size="16" /></div>
+          <div v-for="notif in notifications" :key="notif.id" class="notification-item" :class="{ unread: !notif.read, emergency: notif.is_emergency, faded: notif.read }">
+            <div class="notif-icon" :class="{ 'emergency-bg': notif.is_emergency }"><IconBell :size="16" /></div>
             <div class="notif-content">
               <div class="notif-title">{{ notif.title }}</div>
               <div class="notif-time">{{ notif.time }}</div>
             </div>
+            <button v-if="!notif.read" class="mark-read-btn" @click.stop="markAsRead(notif.id)">✓</button>
           </div>
         </div>
       </div>
@@ -126,7 +135,7 @@ const handleMouseMove = (e) => {
       <div class="card-title">Momentum Patch</div>
       <div class="patch-grid">
         <div class="patch-item border-right">
-          <span class="p-icon"><IconBluetooth :size="16" /></span>
+          <span class="p-icon"><IconBluetooth :size="22" /></span>
           <div class="p-info">
             <span class="p-label">Device Status : </span>
             <span class="p-value" :class="{ 'status-active': deviceStore.activeDevice, 'status-inactive': !deviceStore.activeDevice }">
@@ -135,14 +144,14 @@ const handleMouseMove = (e) => {
           </div>
         </div>
         <div class="patch-item border-right">
-          <span class="p-icon"><IconBattery :size="16" /></span>
+          <span class="p-icon"><IconBattery :size="22" /></span>
           <div class="p-info">
             <span class="p-label">Battery :</span>
             <span class="p-value">--%</span>
           </div>
         </div>
         <div class="patch-item">
-          <span class="p-icon"><IconSignal :size="16" /></span>
+          <span class="p-icon"><IconSignal :size="22" /></span>
           <div class="p-info">
             <span class="p-label">Bluetooth :</span>
             <span class="p-value" :class="{ 'status-active': deviceStore.activeDevice }">
@@ -154,7 +163,7 @@ const handleMouseMove = (e) => {
     </section>
 
     <section class="section-container">
-      <h2 class="section-title">Today's Health</h2>
+      <h2 class="section-title">Today's Baby Health</h2>
       <div class="metrics-grid">
         <div class="metric-card bg-red">
           <span class="m-icon"><IconHeart :size="22" /></span>
@@ -220,18 +229,21 @@ const handleMouseMove = (e) => {
         <div class="rec-item">• Walk 20 mins</div>
         <div class="rec-item">• Sleep 8 hours</div>
         <div class="rec-item">• Visit doctor next week</div>
+        <div class="rec-item">• Eat more fruits</div>
+        <div class="rec-item">• Take prenatal vitamins</div>
+        <div class="rec-item">• Stay hydrated</div>
+        <div class="rec-item">• Rest adequately</div>
       </div>
-      <button class="view-more">View More</button>
     </section>
 
     <section class="section-container">
       <h2 class="section-title">Quick Action</h2>
       <div class="action-grid">
-        <button class="act-btn btn-mint" @click="router.push('/monitor')"><span class="act-icon"><IconTrendUp :size="20" /></span> Live Monitor</button>
-        <button class="act-btn btn-purple" @click="router.push('/ai-analysis')"><span class="act-icon"><IconSmile :size="20" /></span> AI Analysis</button>
-        <button class="act-btn btn-peach" @click="router.push('/health-report')"><span class="act-icon"><IconDocument :size="20" /></span> Report</button>
+        <button class="act-btn btn-mint" @click="router.push('/monitor')"><span class="act-icon"><IconTrendUp :size="20" color="#00a86b" /></span> Live Monitor</button>
+        <button class="act-btn btn-purple" @click="router.push('/ai-analysis')"><span class="act-icon"><IconSmile :size="20" color="#6b5b95" /></span> AI Analysis</button>
+        <button class="act-btn btn-peach" @click="router.push('/health-report')"><span class="act-icon"><IconDocument :size="20" color="#d35400" /></span> Report</button>
         <button class="act-btn btn-rose text-danger" @click="router.push('/emergency')">
-          <span class="act-icon"><IconWarning :size="20" /></span> Emergency
+          <span class="act-icon"><IconWarning :size="20" color="#c0392b" /></span> Emergency
         </button>
       </div>
     </section>
@@ -377,6 +389,18 @@ const handleMouseMove = (e) => {
   font-weight: bold;
   color: #333;
 }
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.mark-all-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: #449284;
+  cursor: pointer;
+}
 .close-btn {
   background: none;
   border: none;
@@ -399,13 +423,42 @@ const handleMouseMove = (e) => {
   padding: 12px;
   border-radius: 12px;
   margin-bottom: 8px;
-  transition: background 0.2s;
+  transition: background 0.2s, opacity 0.3s;
+  align-items: center;
 }
 .notification-item:hover {
   background: #f9f9f9;
 }
 .notification-item.unread {
   background: #f0f7ff;
+}
+.notification-item.faded {
+  opacity: 0.5;
+}
+.notification-item.emergency {
+  background: #fddcdb;
+  border: 1px solid #ffcccc;
+}
+.emergency-bg {
+  background: #ff6b6b !important;
+}
+.mark-read-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #449284;
+  background: white;
+  color: #449284;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mark-read-btn:hover {
+  background: #449284;
+  color: white;
 }
 .notif-icon {
   width: 32px;
@@ -462,7 +515,7 @@ const handleMouseMove = (e) => {
   border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
 .p-icon {
-  font-size: 28px;
+  font-size: 36px;
   display: flex;
   align-items: center;
   justify-content: center;

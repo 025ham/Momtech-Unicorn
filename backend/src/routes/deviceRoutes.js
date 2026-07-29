@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import db from '../db/connection.js';
+import { queryAll, queryGet, queryRun } from '../db/connection.js';
 
 const router = Router();
 
@@ -7,13 +7,13 @@ const router = Router();
 router.get('/', (req, res) => {
   const { user_id } = req.query;
   if (!user_id) return res.status(400).json({ error: 'user_id is required' });
-  const devices = db.prepare('SELECT * FROM bluetooth_devices WHERE user_id = ? ORDER BY is_active DESC, last_connected DESC').all(user_id);
+  const devices = queryAll('SELECT * FROM bluetooth_devices WHERE user_id = ? ORDER BY is_active DESC, last_connected DESC', [user_id]);
   res.json(devices);
 });
 
 // GET /api/devices/:id
 router.get('/:id', (req, res) => {
-  const device = db.prepare('SELECT * FROM bluetooth_devices WHERE id = ?').get(req.params.id);
+  const device = queryGet('SELECT * FROM bluetooth_devices WHERE id = ?', [req.params.id]);
   if (!device) return res.status(404).json({ error: 'Device not found' });
   res.json(device);
 });
@@ -25,9 +25,10 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'user_id, name, device_type are required' });
   }
   try {
-    const result = db.prepare(
-      'INSERT INTO bluetooth_devices (user_id, name, device_type, mac_address) VALUES (?, ?, ?, ?)'
-    ).run(user_id, name, device_type, mac_address);
+    const result = queryRun(
+      'INSERT INTO bluetooth_devices (user_id, name, device_type, mac_address) VALUES (?, ?, ?, ?)',
+      [user_id, name, device_type, mac_address]
+    );
     res.status(201).json({ id: result.lastInsertRowid, user_id, name, device_type, mac_address });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -40,10 +41,10 @@ router.put('/:id/set-active', (req, res) => {
   if (!user_id) return res.status(400).json({ error: 'user_id is required' });
 
   // Deactivate all user's devices first
-  db.prepare('UPDATE bluetooth_devices SET is_active = 0 WHERE user_id = ?').run(user_id);
+  queryRun('UPDATE bluetooth_devices SET is_active = 0 WHERE user_id = ?', [user_id]);
 
   // Activate this device
-  const result = db.prepare('UPDATE bluetooth_devices SET is_active = 1, last_connected = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?').run(req.params.id, user_id);
+  const result = queryRun('UPDATE bluetooth_devices SET is_active = 1, last_connected = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?', [req.params.id, user_id]);
   if (result.changes === 0) return res.status(404).json({ error: 'Device not found' });
 
   res.json({ id: req.params.id, message: 'Device activated successfully' });
@@ -66,7 +67,7 @@ router.put('/:id', (req, res) => {
   values.push(req.params.id);
 
   const query = `UPDATE bluetooth_devices SET ${fields.join(', ')} WHERE id = ?`;
-  const result = db.prepare(query).run(...values);
+  const result = queryRun(query, values);
   if (result.changes === 0) return res.status(404).json({ error: 'Device not found' });
   res.json({ id: req.params.id, message: 'Device updated successfully' });
 });
@@ -74,9 +75,9 @@ router.put('/:id', (req, res) => {
 // DELETE /api/devices/:id
 router.delete('/:id', (req, res) => {
   // First delete related health logs
-  db.prepare('DELETE FROM health_logs WHERE device_id = ?').run(req.params.id);
+  queryRun('DELETE FROM health_logs WHERE device_id = ?', [req.params.id]);
   // Then delete the device
-  const result = db.prepare('DELETE FROM bluetooth_devices WHERE id = ?').run(req.params.id);
+  const result = queryRun('DELETE FROM bluetooth_devices WHERE id = ?', [req.params.id]);
   if (result.changes === 0) return res.status(404).json({ error: 'Device not found' });
   res.json({ message: 'Device deleted successfully' });
 });

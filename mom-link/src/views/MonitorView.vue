@@ -1,7 +1,9 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
+import { useContactStore } from '@/stores/contacts'
+import { useUserStore } from '@/stores/user'
 import IconBack from '@/components/icons/IconBack.vue'
 import IconHeart from '@/components/icons/IconHeart.vue'
 import IconRefresh from '@/components/icons/IconRefresh.vue'
@@ -12,14 +14,44 @@ import IconSmile from '@/components/icons/IconSmile.vue'
 import IconUser from '@/components/icons/IconUser.vue'
 import IconFeetPink from '@/components/icons/IconFeetPink.vue'
 import IconFeetBlue from '@/components/icons/IconFeetBlue.vue'
+import IconDoctor from '@/components/icons/IconDoctor.vue'
+import IconPhone from '@/components/icons/IconPhone.vue'
+import IconClose from '@/components/icons/IconClose.vue'
 
 const router = useRouter()
 const healthStore = useHealthStore()
+const contactStore = useContactStore()
+const userStore = useUserStore()
 const scrollContainer = ref(null)
-const isSimulating = ref(false)
-let simInterval = null
 
 const goBack = () => router.push('/')
+
+// Share to Doctor modal
+const showShareModal = ref(false)
+
+const doctorContacts = computed(() => {
+  return contactStore.contacts.filter(c => c.contact_type === 'doctor')
+})
+
+const openShareModal = async () => {
+  await contactStore.fetchContacts()
+  showShareModal.value = true
+}
+
+const shareToDoctor = (doctor) => {
+  const logs = healthStore.logs
+  const summary = `Health Report - MomLink\nDate: ${new Date().toLocaleDateString()}\n========================\nHeart Rate: ${logs[0]?.heart_rate || '-'} bpm\nTemperature: ${logs[0]?.temperature || '-'}°C\nBaby Movement: ${logs[0]?.baby_movement || '-'} times\nStress Level: ${logs[0]?.stress_level || '-'}\n========================\nPatient: ${userStore.user?.name || 'N/A'}\nHospital: ${userStore.user?.hospital || 'N/A'}`
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'MomLink Health Report',
+      text: summary
+    }).catch(() => {})
+  } else {
+    window.location.href = `tel:${doctor.phone}`
+  }
+  showShareModal.value = false
+}
 
 // Real data from store
 const heartRate = computed(() => healthStore.latest?.heart_rate || '--')
@@ -34,31 +66,51 @@ const timelineEvents = ref([
   { time: '18:20', type: 'pink', active: false }
 ])
 
-// Heart Rate Graph - simulate real-time if no real data
-const heartRateHistory = ref([120, 135, 128, 142, 138, 145, 140, 148, 143, 147, 144, 146])
-const movementHistory = ref([5, 8, 12, 6, 9, 11, 7, 10, 13, 8, 6, 9])
-const temperatureHistory = ref([36.5, 36.6, 36.7, 36.6, 36.8, 36.7, 36.5, 36.6, 36.7, 36.8, 36.6, 36.7])
+// Heart Rate Graph - use shared history from store simulation
+const heartRateHistory = ref([140, 142, 138, 141, 145, 143, 139, 142, 146, 144, 140, 143])
+const movementHistory = ref([7, 9, 6, 8, 10, 7, 9, 11, 8, 10, 7, 9])
+const temperatureHistory = ref([36.5, 36.6, 36.4, 36.5, 36.7, 36.5, 36.4, 36.6, 36.7, 36.5, 36.4, 36.5])
 
-const heartRateData = computed(() => {
-  const logs = healthStore.logs.slice(0, 12).reverse()
-  const apiData = logs.map(l => l.heart_rate).filter(Boolean)
-  return apiData.length > 0 ? apiData : heartRateHistory.value
-})
+// Use refs instead of computed so graph updates when data changes
+const heartRateData = ref([140, 142, 138, 141, 145, 143, 139, 142, 146, 144, 140, 143])
+const movementData = ref([7, 9, 6, 8, 10, 7, 9, 11, 8, 10, 7, 9])
+const temperatureData = ref([36.5, 36.6, 36.4, 36.5, 36.7, 36.5, 36.4, 36.6, 36.7, 36.5, 36.4, 36.5])
 
-const movementData = computed(() => {
-  const logs = healthStore.logs.slice(0, 12).reverse()
-  const apiData = logs.map(l => l.baby_movement).filter(Boolean)
-  return apiData.length > 0 ? apiData : movementHistory.value
-})
+// Watch store's latest value and update graph + local history
+watch(() => healthStore.latest, (newVal) => {
+  if (newVal && newVal.heart_rate) {
+    // Update histories
+    heartRateHistory.value = [...heartRateHistory.value.slice(1), newVal.heart_rate]
+    movementHistory.value = [...movementHistory.value.slice(1), newVal.baby_movement || movementHistory.value[movementHistory.value.length - 1]]
+    temperatureHistory.value = [...temperatureHistory.value.slice(1), newVal.temperature || temperatureHistory.value[temperatureHistory.value.length - 1]]
+    // Update graph data
+    heartRateData.value = [...heartRateHistory.value]
+    movementData.value = [...movementHistory.value]
+    temperatureData.value = [...temperatureHistory.value]
+  }
+}, { deep: true })
 
-const temperatureData = computed(() => {
+const updateGraphData = () => {
   const logs = healthStore.logs.slice(0, 12).reverse()
-  const apiData = logs.map(l => l.temperature).filter(Boolean)
-  return apiData.length > 0 ? apiData : temperatureHistory.value
-})
+  const apiHR = logs.map(l => l.heart_rate).filter(Boolean)
+  const apiMov = logs.map(l => l.baby_movement).filter(Boolean)
+  const apiTemp = logs.map(l => l.temperature).filter(Boolean)
+
+  if (apiHR.length > 0) {
+    heartRateData.value = apiHR
+  }
+
+  if (apiMov.length > 0) {
+    movementData.value = apiMov
+  }
+
+  if (apiTemp.length > 0) {
+    temperatureData.value = apiTemp
+  }
+}
 
 const maxHR = 180
-const minHR = 60
+const minHR = 100
 const graphPoints = computed(() => {
   const width = 300
   const height = 120
@@ -106,31 +158,22 @@ const areaPath = computed(() => {
 })
 
 const currentHR = computed(() => {
-  if (isSimulating.value && heartRateHistory.value.length > 0) {
-    return heartRateHistory.value[heartRateHistory.value.length - 1]
-  }
   return healthStore.latest?.heart_rate || '--'
 })
 
 onMounted(() => {
-  healthStore.fetchLogs(50)
+  healthStore.fetchLogs(50).then(() => {
+    updateGraphData()
+  })
 
-  // Simulate real-time data if no real data
+  // Start simulation if no real data
   if (healthStore.logs.length === 0) {
-    isSimulating.value = true
-    simInterval = setInterval(() => {
-      const newHR = 140 + Math.floor(Math.random() * 15) - 7
-      const newMov = Math.floor(Math.random() * 6) + 5
-      const newTemp = (36.3 + Math.random() * 0.8).toFixed(1)
-      heartRateHistory.value = [...heartRateHistory.value.slice(1), newHR]
-      movementHistory.value = [...movementHistory.value.slice(1), newMov]
-      temperatureHistory.value = [...temperatureHistory.value.slice(1), parseFloat(newTemp)]
-    }, 2000)
+    healthStore.startSimulation()
   }
 })
 
 onUnmounted(() => {
-  if (simInterval) clearInterval(simInterval)
+  // Don't stop simulation - it belongs to the store and can be used by other views
 })
 
 const exportAndShare = () => {
@@ -139,28 +182,15 @@ const exportAndShare = () => {
     alert('No data to share')
     return
   }
-  const summary = `
-Health Report - MomLink
-Date: ${new Date().toLocaleDateString()}
-========================
-Heart Rate: ${logs[0]?.heart_rate || '-'} bpm
-Temperature: ${logs[0]?.temperature || '-'}°C
-Baby Movement: ${logs[0]?.baby_movement || '-'} times
-Stress Level: ${logs[0]?.stress_level || '-'}
-========================
-Full logs: ${logs.length} records
-  `.trim()
+  openShareModal()
+}
 
-  if (navigator.share) {
-    navigator.share({
-      title: 'MomLink Health Report',
-      text: summary
-    }).catch(() => {})
-  } else {
-    navigator.clipboard.writeText(summary).then(() => {
-      alert('Report copied to clipboard!')
-    })
-  }
+const refreshData = () => {
+  healthStore.fetchLatest()
+  healthStore.fetchStats()
+  healthStore.fetchLogs(50).then(() => {
+    updateGraphData()
+  })
 }
 
 
@@ -297,10 +327,45 @@ const handleMouseMove = (e) => {
       </div>
     </div>
 
+    <!-- Share to Doctor Modal -->
+    <div v-if="showShareModal" class="share-modal-overlay" @click="showShareModal = false">
+      <div class="share-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Share to Doctor</h3>
+          <button class="close-btn" @click="showShareModal = false"><IconClose :size="18" /></button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">Select a doctor to share your health report</p>
+          <div v-if="doctorContacts.length === 0" class="no-contacts">
+            No doctor contacts found
+          </div>
+          <div v-for="doctor in doctorContacts" :key="doctor.id" class="doctor-item" @click="shareToDoctor(doctor)">
+            <div class="doctor-icon"><IconDoctor :size="24" /></div>
+            <div class="doctor-info">
+              <span class="doctor-name">{{ doctor.name }}</span>
+              <span class="doctor-phone">{{ doctor.phone }}</span>
+            </div>
+            <button class="call-btn"><IconPhone :size="16" /></button>
+          </div>
+          <div v-if="!doctorContacts.length" class="all-contacts">
+            <p class="modal-desc">Other contacts:</p>
+            <div v-for="contact in contactStore.contacts" :key="contact.id" class="doctor-item" @click="shareToDoctor(contact)">
+              <div class="doctor-icon"><IconDoctor :size="24" /></div>
+              <div class="doctor-info">
+                <span class="doctor-name">{{ contact.name }}</span>
+                <span class="doctor-phone">{{ contact.phone }}</span>
+              </div>
+              <button class="call-btn"><IconPhone :size="16" /></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Action Buttons -->
     <div class="action-row">
-      <button class="action-btn btn-refresh" @click="healthStore.fetchLogs(50)"><IconRefresh :size="16" /> Refresh</button>
-      <button class="action-btn btn-export" @click="exportAndShare"><IconShare :size="16" /> Share to Doctor</button>
+      <button class="action-btn btn-refresh" @click="refreshData"><IconRefresh :size="16" /> Refresh</button>
+      <button class="action-btn btn-export" @click="openShareModal"><IconShare :size="16" /> Share to Doctor</button>
     </div>
 
     <!-- Bottom Nav-->
@@ -533,6 +598,102 @@ const handleMouseMove = (e) => {
 }
 .btn-refresh { background-color: #fcdcdb; color: #333; }
 .btn-export { background-color: #afe1d1; color: #1a302a; }
+
+/* Share Modal */
+.share-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.share-modal {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 340px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+}
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+}
+.modal-body {
+  padding: 16px;
+}
+.modal-desc {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+}
+.no-contacts {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+  font-size: 13px;
+}
+.doctor-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.doctor-item:hover {
+  background: #f0f7ff;
+}
+.doctor-icon {
+  width: 40px;
+  height: 40px;
+  background: #d1ebd9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.doctor-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.doctor-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+.doctor-phone {
+  font-size: 12px;
+  color: #888;
+}
+.all-contacts {
+  margin-top: 16px;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
 
 /* Bottom Nav */
 .bottom-nav {

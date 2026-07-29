@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import db from '../db/connection.js';
+import { queryAll, queryGet, queryRun } from '../db/connection.js';
 
 const router = Router();
 
@@ -28,7 +28,7 @@ router.get('/', (req, res) => {
   query += ' ORDER BY hl.logged_at DESC LIMIT ?';
   params.push(parseInt(limit));
 
-  const logs = db.prepare(query).all(...params);
+  const logs = queryAll(query, params);
   res.json(logs);
 });
 
@@ -37,14 +37,14 @@ router.get('/latest', (req, res) => {
   const { user_id } = req.query;
   if (!user_id) return res.status(400).json({ error: 'user_id is required' });
 
-  const latest = db.prepare(`
+  const latest = queryGet(`
     SELECT hl.*, bd.name as device_name, bd.device_type
     FROM health_logs hl
     LEFT JOIN bluetooth_devices bd ON hl.device_id = bd.id
     WHERE hl.user_id = ?
     ORDER BY hl.logged_at DESC
     LIMIT 1
-  `).get(user_id);
+  `, [user_id]);
 
   res.json(latest || null);
 });
@@ -54,7 +54,7 @@ router.get('/stats', (req, res) => {
   const { user_id } = req.query;
   if (!user_id) return res.status(400).json({ error: 'user_id is required' });
 
-  const stats = db.prepare(`
+  const stats = queryGet(`
     SELECT
       COUNT(*) as total_logs,
       AVG(heart_rate) as avg_heart_rate,
@@ -66,7 +66,7 @@ router.get('/stats', (req, res) => {
       MAX(temperature) as max_temperature
     FROM health_logs
     WHERE user_id = ? AND logged_at >= datetime('now', '-7 days')
-  `).get(user_id);
+  `, [user_id]);
 
   res.json(stats);
 });
@@ -77,10 +77,10 @@ router.post('/', (req, res) => {
   if (!user_id) return res.status(400).json({ error: 'user_id is required' });
 
   try {
-    const result = db.prepare(`
+    const result = queryRun(`
       INSERT INTO health_logs (user_id, device_id, heart_rate, temperature, baby_movement, stress_level)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(user_id, device_id || null, heart_rate, temperature, baby_movement, stress_level);
+    `, [user_id, device_id || null, heart_rate, temperature, baby_movement, stress_level]);
     res.status(201).json({ id: result.lastInsertRowid, user_id, heart_rate, temperature, baby_movement });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -92,13 +92,13 @@ router.get('/export', (req, res) => {
   const { user_id, format = 'json' } = req.query;
   if (!user_id) return res.status(400).json({ error: 'user_id is required' });
 
-  const logs = db.prepare(`
+  const logs = queryAll(`
     SELECT hl.*, bd.name as device_name
     FROM health_logs hl
     LEFT JOIN bluetooth_devices bd ON hl.device_id = bd.id
     WHERE hl.user_id = ?
     ORDER BY hl.logged_at DESC
-  `).all(user_id);
+  `, [user_id]);
 
   if (format === 'csv') {
     const headers = 'id,user_id,device_id,device_name,heart_rate,temperature,baby_movement,stress_level,logged_at\n';
