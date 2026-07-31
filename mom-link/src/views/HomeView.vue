@@ -104,8 +104,9 @@ const startHealthUpdates = (isEmergency) => {
     currentHR = 175
     currentTemp = 38.2
   } else {
-    currentHR = 75
-    currentTemp = 36.6
+    // Normal: HR 120-160
+    currentHR = Math.floor(Math.random() * 41) + 120  // 120-160
+    currentTemp = parseFloat((36.5 + Math.random() * 0.3).toFixed(1)) // 36.5-36.8
   }
 
   healthStore.latest = {
@@ -125,8 +126,8 @@ const startHealthUpdates = (isEmergency) => {
       currentTemp = Math.max(37.8, Math.min(39.0, currentTemp + (Math.random() > 0.5 ? 0.1 : -0.1)))
       currentTemp = parseFloat(currentTemp.toFixed(1))
     } else {
-      // Normal: HR changes +/- 1, temp changes +/- 0.1
-      currentHR = Math.max(65, Math.min(85, currentHR + (Math.random() > 0.5 ? 1 : -1)))
+      // Normal: HR 120-160 changes +/- 1, temp changes +/- 0.1
+      currentHR = Math.max(120, Math.min(160, currentHR + (Math.random() > 0.5 ? 1 : -1)))
       currentTemp = Math.max(36.2, Math.min(37.0, currentTemp + (Math.random() > 0.5 ? 0.1 : -0.1)))
       currentTemp = parseFloat(currentTemp.toFixed(1))
     }
