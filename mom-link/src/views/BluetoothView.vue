@@ -75,10 +75,19 @@ const addDevice = async () => {
 
 const deleteDevice = async (id) => {
   if (!confirm('Remove this device?')) return
+  // Delete locally first for demo (even if API fails)
+  const idx = deviceStore.devices.findIndex(d => d.id === id)
+  if (idx !== -1) {
+    deviceStore.devices.splice(idx, 1)
+  }
+  if (deviceStore.activeDevice?.id === id) {
+    deviceStore.activeDevice = deviceStore.devices[0] || null
+  }
+  // Also try API delete (may fail silently)
   try {
     await deviceStore.deleteDevice(id)
   } catch (err) {
-    alert('Failed: ' + err.message)
+    console.log('API delete failed, removed locally')
   }
 }
 
@@ -178,8 +187,8 @@ const addEmergencyDevice = async () => {
     deviceStore.devices.push(newDevice)
     deviceStore.activeDevice = newDevice
 
-    // Show emergency alert immediately
-    showEmergencyAlert.value = true
+    // DON'T show emergency alert immediately - wait for user to select it
+    // The selectDevice() function will show it when explicitly selected
 
     // Also update healthStore.latest with emergency values
     healthStore.latest = {

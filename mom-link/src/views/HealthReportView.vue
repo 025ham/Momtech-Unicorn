@@ -20,23 +20,48 @@ const contactStore = useContactStore()
 const userStore = useUserStore()
 
 onMounted(async () => {
-  await healthStore.fetchLogs(100)
+  // Fetch user first
   await userStore.fetchUser()
 
+  // Fetch logs - generate mock data if empty
+  await healthStore.fetchLogs(100)
+
   // Generate mock data if no logs exist (for demo purposes)
+  // Data spans 30 days with proper distribution for day/week/month views
   if (!healthStore.logs || healthStore.logs.length === 0) {
     const now = Date.now()
-    for (let i = 0; i < 50; i++) {
-      const loggedAt = new Date(now - i * 3600000 * 2).toISOString() // every 2 hours
-      healthStore.logs.push({
+    const mockLogs = []
+
+    // Generate 30 days of data, more dense for recent days
+    for (let i = 0; i < 100; i++) {
+      const daysAgo = i / 3.3  // ~30 days spread
+      const loggedAt = new Date(now - daysAgo * 24 * 3600000).toISOString()
+
+      // Create realistic patterns
+      // Heart rate varies by time of day and pregnancy stress
+      const baseHR = 72 + Math.sin(i * 0.3) * 8
+      const hr = Math.floor(baseHR + Math.random() * 10 - 5)
+
+      // Temperature stays fairly stable
+      const temp = parseFloat((36.4 + Math.random() * 0.6).toFixed(1))
+
+      // Baby movement - more active in recent days
+      const recentBonus = Math.max(0, 5 - daysAgo * 0.3)
+      const movement = Math.floor(Math.random() * 8 + 4 + recentBonus)
+
+      const stressOptions = ['Low', 'Normal', 'Medium', 'Normal', 'Low']
+      const stress = stressOptions[Math.floor(Math.random() * stressOptions.length)]
+
+      mockLogs.push({
         id: now + i,
-        heart_rate: Math.floor(Math.random() * 30) + 70,  // 70-100 bpm
-        temperature: parseFloat((36.2 + Math.random() * 0.8).toFixed(1)),
-        baby_movement: Math.floor(Math.random() * 12) + 3, // 3-15 times
-        stress_level: ['Low', 'Normal', 'Medium'][Math.floor(Math.random() * 3)],
+        heart_rate: hr,
+        temperature: temp,
+        baby_movement: Math.max(2, movement),
+        stress_level: stress,
         logged_at: loggedAt,
       })
     }
+    healthStore.logs = mockLogs
   }
 })
 
@@ -262,13 +287,13 @@ const maxMov = 20
 const maxTemp = 40
 const minTemp = 35
 
-const graphHeight = 80
-const graphPadding = 5
+const graphHeight = 120
+const graphPadding = 10
 
 // Generate SVG path for a line
 const makeLinePath = (data, max, min) => {
   if (!data.length) return ''
-  const width = 280
+  const width = 270
   const stepX = (width - graphPadding * 2) / (data.length - 1)
   let d = `M ${graphPadding} ${graphHeight - graphPadding - ((data[0] - min) / (max - min)) * (graphHeight - graphPadding * 2)}`
   for (let i = 1; i < data.length; i++) {
@@ -282,7 +307,7 @@ const makeLinePath = (data, max, min) => {
 // Generate area path
 const makeAreaPath = (data, max, min) => {
   if (!data.length) return ''
-  const width = 280
+  const width = 270
   const stepX = (width - graphPadding * 2) / (data.length - 1)
   let d = `M ${graphPadding} ${graphHeight - graphPadding}`
   d += ` L ${graphPadding} ${graphHeight - graphPadding - ((data[0] - min) / (max - min)) * (graphHeight - graphPadding * 2)}`
@@ -294,6 +319,22 @@ const makeAreaPath = (data, max, min) => {
   d += ` L ${graphPadding + (data.length - 1) * stepX} ${graphHeight - graphPadding} Z`
   return d
 }
+
+// Data points for rendering circles on chart
+const makeDataPoints = (data, max, min) => {
+  if (!data.length) return []
+  const width = 270
+  const stepX = (width - graphPadding * 2) / (data.length - 1)
+  return data.map((val, i) => ({
+    x: graphPadding + i * stepX,
+    y: graphHeight - graphPadding - ((val - min) / (max - min)) * (graphHeight - graphPadding * 2),
+    val
+  }))
+}
+
+const heartRatePoints = computed(() => makeDataPoints(heartRateData.value, maxHR, minHR))
+const movementPoints = computed(() => makeDataPoints(movementData.value, maxMov, 0))
+const temperaturePoints = computed(() => makeDataPoints(temperatureData.value, maxTemp, minTemp))
 
 const hrLinePath = computed(() => makeLinePath(heartRateData.value, maxHR, minHR))
 const hrAreaPath = computed(() => makeAreaPath(heartRateData.value, maxHR, minHR))
@@ -479,16 +520,35 @@ const downloadPDF = () => {
         <span class="chart-title"><IconHeart :size="14" color="#d9534f" /> Heart Rate</span>
         <span class="chart-unit">bpm</span>
       </div>
-      <svg viewBox="0 0 280 80" class="chart-svg">
-        <defs>
-          <linearGradient id="hrGradR" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#d9534f" stop-opacity="0.5"/>
-            <stop offset="100%" stop-color="#d9534f" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <path :d="hrAreaPath" fill="url(#hrGradR)" />
-        <path :d="hrLinePath" fill="none" stroke="#d9534f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <div class="chart-svg-wrapper">
+        <svg viewBox="0 0 280 120" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="hrGradR" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#d9534f" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#d9534f" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid lines -->
+          <line x1="10" y1="20" x2="270" y2="20" stroke="#fcdcdb" stroke-width="1"/>
+          <line x1="10" y1="45" x2="270" y2="45" stroke="#fcdcdb" stroke-width="1"/>
+          <line x1="10" y1="70" x2="270" y2="70" stroke="#fcdcdb" stroke-width="1"/>
+          <line x1="10" y1="95" x2="270" y2="95" stroke="#fcdcdb" stroke-width="1"/>
+          <!-- Y-axis labels -->
+          <text x="2" y="24" font-size="7" fill="#aaa">180</text>
+          <text x="2" y="49" font-size="7" fill="#aaa">150</text>
+          <text x="2" y="74" font-size="7" fill="#aaa">120</text>
+          <text x="2" y="99" font-size="7" fill="#aaa">90</text>
+          <!-- Area fill -->
+          <path :d="hrAreaPath" fill="url(#hrGradR)" opacity="0.4"/>
+          <!-- Main line -->
+          <path :d="hrLinePath" fill="none" stroke="#d9534f" stroke-width="2" stroke-linecap="round"/>
+          <!-- Data points -->
+          <circle v-for="(pt, i) in heartRatePoints" :key="'hr'+i" :cx="pt.x" :cy="pt.y" r="3" fill="#d9534f"/>
+          <!-- Current value badge -->
+          <rect x="235" y="5" width="35" height="18" rx="8" fill="#d9534f"/>
+          <text x="252" y="17" font-size="9" fill="white" font-weight="bold" text-anchor="middle">{{ heartRateData[heartRateData.length-1] || '--' }}</text>
+        </svg>
+      </div>
     </section>
 
     <!-- Baby Movement Chart -->
@@ -497,16 +557,35 @@ const downloadPDF = () => {
         <span class="chart-title"><IconBaby :size="14" color="#2b5c8f" /> Baby Movement</span>
         <span class="chart-unit">times</span>
       </div>
-      <svg viewBox="0 0 280 80" class="chart-svg">
-        <defs>
-          <linearGradient id="movGradR" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#2b5c8f" stop-opacity="0.5"/>
-            <stop offset="100%" stop-color="#2b5c8f" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <path :d="movAreaPath" fill="url(#movGradR)" />
-        <path :d="movLinePath" fill="none" stroke="#2b5c8f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <div class="chart-svg-wrapper" style="background:#f0f7ff;border-color:#d6e2f9">
+        <svg viewBox="0 0 280 120" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="movGradR" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#2b5c8f" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#2b5c8f" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid lines -->
+          <line x1="10" y1="20" x2="270" y2="20" stroke="#d6e2f9" stroke-width="1"/>
+          <line x1="10" y1="45" x2="270" y2="45" stroke="#d6e2f9" stroke-width="1"/>
+          <line x1="10" y1="70" x2="270" y2="70" stroke="#d6e2f9" stroke-width="1"/>
+          <line x1="10" y1="95" x2="270" y2="95" stroke="#d6e2f9" stroke-width="1"/>
+          <!-- Y-axis labels -->
+          <text x="2" y="24" font-size="7" fill="#aaa">20</text>
+          <text x="2" y="49" font-size="7" fill="#aaa">15</text>
+          <text x="2" y="74" font-size="7" fill="#aaa">10</text>
+          <text x="2" y="99" font-size="7" fill="#aaa">5</text>
+          <!-- Area fill -->
+          <path :d="movAreaPath" fill="url(#movGradR)" opacity="0.4"/>
+          <!-- Main line -->
+          <path :d="movLinePath" fill="none" stroke="#2b5c8f" stroke-width="2" stroke-linecap="round"/>
+          <!-- Data points -->
+          <circle v-for="(pt, i) in movementPoints" :key="'mov'+i" :cx="pt.x" :cy="pt.y" r="3" fill="#2b5c8f"/>
+          <!-- Current value badge -->
+          <rect x="235" y="5" width="35" height="18" rx="8" fill="#2b5c8f"/>
+          <text x="252" y="17" font-size="9" fill="white" font-weight="bold" text-anchor="middle">{{ movementData[movementData.length-1] || '--' }}</text>
+        </svg>
+      </div>
     </section>
 
     <!-- Temperature Chart -->
@@ -515,16 +594,35 @@ const downloadPDF = () => {
         <span class="chart-title"><IconTemperature :size="14" color="#e26d5c" /> Temperature</span>
         <span class="chart-unit">°C</span>
       </div>
-      <svg viewBox="0 0 280 80" class="chart-svg">
-        <defs>
-          <linearGradient id="tempGradR" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#f4ad73" stop-opacity="0.5"/>
-            <stop offset="100%" stop-color="#f4ad73" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <path :d="tempAreaPath" fill="url(#tempGradR)" />
-        <path :d="tempLinePath" fill="none" stroke="#e26d5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <div class="chart-svg-wrapper" style="background:#fff8f5;border-color:#fde0cc">
+        <svg viewBox="0 0 280 120" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="tempGradR" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#f4ad73" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#f4ad73" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid lines -->
+          <line x1="10" y1="20" x2="270" y2="20" stroke="#fde0cc" stroke-width="1"/>
+          <line x1="10" y1="45" x2="270" y2="45" stroke="#fde0cc" stroke-width="1"/>
+          <line x1="10" y1="70" x2="270" y2="70" stroke="#fde0cc" stroke-width="1"/>
+          <line x1="10" y1="95" x2="270" y2="95" stroke="#fde0cc" stroke-width="1"/>
+          <!-- Y-axis labels -->
+          <text x="2" y="24" font-size="7" fill="#aaa">40</text>
+          <text x="2" y="49" font-size="7" fill="#aaa">37</text>
+          <text x="2" y="74" font-size="7" fill="#aaa">35</text>
+          <text x="2" y="99" font-size="7" fill="#aaa">33</text>
+          <!-- Area fill -->
+          <path :d="tempAreaPath" fill="url(#tempGradR)" opacity="0.4"/>
+          <!-- Main line -->
+          <path :d="tempLinePath" fill="none" stroke="#e26d5c" stroke-width="2" stroke-linecap="round"/>
+          <!-- Data points -->
+          <circle v-for="(pt, i) in temperaturePoints" :key="'temp'+i" :cx="pt.x" :cy="pt.y" r="3" fill="#e26d5c"/>
+          <!-- Current value badge -->
+          <rect x="235" y="5" width="35" height="18" rx="8" fill="#e26d5c"/>
+          <text x="252" y="17" font-size="9" fill="white" font-weight="bold" text-anchor="middle">{{ temperatureData[temperatureData.length-1] || '--' }}°</text>
+        </svg>
+      </div>
     </section>
 
     <!-- Doctor Reports -->
@@ -693,6 +791,20 @@ const downloadPDF = () => {
   width: 100%;
   height: 80px;
   overflow: visible;
+}
+
+/* Chart with full details like MonitorView */
+.chart-svg-wrapper {
+  position: relative;
+  background: #fff8f8;
+  border: 1px solid #fcdcdb;
+  border-radius: 12px;
+  height: 120px;
+  overflow: hidden;
+}
+.chart-svg-wrapper svg {
+  width: 100%;
+  height: 100%;
 }
 
 /* Doctor Report */

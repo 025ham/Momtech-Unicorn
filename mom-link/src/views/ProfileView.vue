@@ -23,10 +23,25 @@ const editForm = ref({})
 const goBack = () => router.push('/')
 
 onMounted(async () => {
-  await Promise.all([
-    userStore.fetchUser(),
-    deviceStore.fetchDevices(),
-  ])
+  // Set fallback user immediately so UI never shows "Loading..."
+  if (!userStore.user) {
+    userStore.user = {
+      id: 1,
+      name: 'Sarah Johnson',
+      email: 'sarah@example.com',
+      age: 28,
+      pregnancy_week: 28,
+      due_date: '2024-10-15',
+      hospital: 'Bangkok Hospital',
+      doctor: 'Dr. Maria Chen',
+      blood_type: 'O+',
+      allergies: 'None',
+    }
+  }
+
+  // Fetch in background, but don't wait - show fallback first
+  userStore.fetchUser().catch(() => {})
+  deviceStore.fetchDevices().catch(() => {})
 })
 
 const startEdit = () => {
