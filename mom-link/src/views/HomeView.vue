@@ -88,8 +88,8 @@ onMounted(async () => {
 })
 
 // Health value state for live updates
-let currentHR = 75
-let currentTemp = 36.6
+let currentHR = 130  // Safe initial value in normal pregnancy range
+let currentTemp = 36.8
 let healthInterval = null
 
 const startHealthUpdates = (isEmergency) => {
@@ -158,7 +158,7 @@ const healthScore = computed(() => {
   const movement = latest.baby_movement ?? 10
   const stress = latest.stress_level || 'Normal'
 
-  // Emergency thresholds
+  // Emergency thresholds (pregnancy-adjusted: HR 60-170 is normal for pregnant women)
   if (hr > 170 || hr < 50 || temp > 38.5 || temp < 35.5 || movement <= 2 || stress === 'High') {
     return Math.floor(Math.random() * 20 + 15) // 15-35% for emergency
   }
@@ -166,17 +166,17 @@ const healthScore = computed(() => {
   // Calculate score based on all metrics
   let score = 100
 
-  // Heart rate (normal 60-100)
-  if (hr > 100) score -= (hr - 100) * 1.5
-  if (hr < 60) score -= (60 - hr) * 1.5
+  // Heart rate (normal 60-170 for pregnancy)
+  if (hr > 170) score -= (hr - 170) * 3
+  if (hr < 60) score -= (60 - hr) * 2
 
-  // Temperature (normal 36.1-37.5)
+  // Temperature (normal 36.0-37.5 for pregnancy)
   if (temp > 37.5) score -= (temp - 37.5) * 15
-  if (temp < 36.1) score -= (36.1 - temp) * 15
+  if (temp < 36.0) score -= (36.0 - temp) * 15
 
   // Baby movement (normal 3+)
   if (movement < 3) score -= (3 - movement) * 8
-  if (movement < 5) score -= (5 - movement) * 3
+  if (movement < 5) score -= (5 - movement) * 2
 
   // Stress level
   if (stress === 'High') score -= 25
