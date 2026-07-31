@@ -34,14 +34,57 @@ const markAsRead = (id) => notificationStore.markAsRead(id)
 const markAllAsRead = () => notificationStore.markAllAsRead()
 
 onMounted(async () => {
-  // Start simulation if no data exists - shared across all views
-  if (!healthStore.latest) {
+  // Restore activeDevice from localStorage first
+  const savedActive = localStorage.getItem('momlink_demo_active')
+  const savedDevices = localStorage.getItem('momlink_demo_devices')
+  if (savedDevices) {
+    try {
+      const parsed = JSON.parse(savedDevices)
+      if (parsed.length > 0) {
+        deviceStore.devices = parsed
+        // Find device by is_active flag first, then by savedActive id
+        let active = parsed.find(d => d.is_active === 1)
+        if (!active && savedActive) {
+          active = parsed.find(d => d.id == savedActive)
+        }
+        if (!active) {
+          active = parsed[0] // fallback to first device
+        }
+        deviceStore.activeDevice = active || null
+      }
+    } catch (e) {}
+  }
+
+  // Set health values based on active device type
+  if (deviceStore.activeDevice) {
+    const isEmergency = deviceStore.activeDevice.is_emergency ||
+                       deviceStore.activeDevice.name?.includes('Emergency')
+    if (isEmergency) {
+      // Emergency device - show emergency values
+      healthStore.latest = {
+        heart_rate: Math.floor(Math.random() * 30) + 170,
+        temperature: parseFloat((37.8 + Math.random() * 1.2).toFixed(1)),
+        baby_movement: Math.floor(Math.random() * 3),
+        stress_level: 'High',
+        logged_at: new Date().toISOString(),
+      }
+    } else {
+      // Normal device - show normal values
+      healthStore.latest = {
+        heart_rate: Math.floor(Math.random() * 20) + 65,
+        temperature: parseFloat((36.2 + Math.random() * 0.8).toFixed(1)),
+        baby_movement: Math.floor(Math.random() * 10) + 5,
+        stress_level: ['Low', 'Normal'][Math.floor(Math.random() * 2)],
+        logged_at: new Date().toISOString(),
+      }
+    }
+  } else {
+    // No device - start simulation with normal values
     healthStore.startSimulation()
   }
 
   // Fetch data - but don't wait for all to complete
   healthStore.fetchStats().then(() => {
-    // After fetch, ensure stats has fallback
     if (!healthStore.stats) {
       healthStore.stats = {
         avg_heart_rate: 75,
@@ -60,7 +103,6 @@ onMounted(async () => {
   })
 
   userStore.fetchUser().catch(() => {})
-  deviceStore.fetchDevices().catch(() => {})
 })
 
 // AI Health Score computed - calculates from ALL metrics
