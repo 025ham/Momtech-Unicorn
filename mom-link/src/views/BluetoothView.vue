@@ -26,12 +26,13 @@ const showEmergencyAlert = ref(false)
 
 // Demo devices list
 const demoDevices = [
-  { name: 'Heart Rate Monitor Pro', device_type: 'heart_rate_monitor', mac_address: '00:11:22:33:44:55' },
-  { name: 'Temp Sensor Mini', device_type: 'temperature_sensor', mac_address: '00:11:22:33:44:56' },
-  { name: 'Baby Movement Detector', device_type: 'movement_sensor', mac_address: '00:11:22:33:44:57' },
+  { name: 'Heart Rate Monitor Pro', device_type: 'heart_rate_monitor', mac_address: '00:11:22:33:44:55', is_emergency: false },
+  { name: 'Temp Sensor Mini', device_type: 'temperature_sensor', mac_address: '00:11:22:33:44:56', is_emergency: false },
+  { name: 'Baby Movement Detector', device_type: 'movement_sensor', mac_address: '00:11:22:33:44:57', is_emergency: false },
 ]
 
-const emergencyDevice = {
+// Emergency device template
+const emergencyDeviceTemplate = {
   name: 'Emergency Test Device',
   device_type: 'heart_rate_monitor',
   mac_address: '00:00:00:00:00:EMERGENCY',
@@ -237,7 +238,7 @@ const addDemoDevice = async (demo) => {
 // Add emergency test device with ABNORMAL values
 const addEmergencyDevice = async () => {
   // Check if emergency device already exists
-  if (deviceStore.devices.some(d => d.mac_address === emergencyDevice.mac_address)) {
+  if (deviceStore.devices.some(d => d.mac_address === emergencyDeviceTemplate.mac_address)) {
     alert('Emergency device already added!')
     return
   }
@@ -246,9 +247,9 @@ const addEmergencyDevice = async () => {
     // DON'T set is_active here - user must explicitly select it
     const newDevice = {
       id: Date.now(),
-      name: emergencyDevice.name,
-      device_type: emergencyDevice.device_type,
-      mac_address: emergencyDevice.mac_address,
+      name: emergencyDeviceTemplate.name,
+      device_type: emergencyDeviceTemplate.device_type,
+      mac_address: emergencyDeviceTemplate.mac_address,
       is_active: 0, // NOT active yet - user must select
       is_emergency: true,
     }
