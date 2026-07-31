@@ -118,7 +118,12 @@ const selectDevice = async (id) => {
 
     // Check if selected device is emergency device
     const device = deviceStore.devices.find(d => d.id === id)
-    if (device?.name?.includes('Emergency')) {
+    console.log('Selected device:', device)
+    console.log('is_emergency:', device?.is_emergency)
+    console.log('name includes Emergency:', device?.name?.includes('Emergency'))
+
+    if (device?.is_emergency || device?.name?.includes('Emergency')) {
+      console.log('Showing emergency alert!')
       showEmergencyAlert.value = true
     }
   } catch (err) {
