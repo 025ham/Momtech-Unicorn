@@ -69,11 +69,27 @@ const loadDevicesFromStorage = () => {
 
 // Initialize demo devices when component mounts
 onMounted(() => {
-  // Try loading from storage first, then create demo devices if needed
-  loadDevicesFromStorage()
+  // Check if user has interacted before (stored in localStorage)
+  const hasInteracted = localStorage.getItem('momlink_demo_interacted') === 'true'
 
-  // If no devices after loading, create demo devices
-  if (deviceStore.devices.length === 0) {
+  // Try loading from localStorage first
+  const saved = localStorage.getItem('momlink_demo_devices')
+
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      if (parsed.length > 0) {
+        deviceStore.devices = parsed
+        const activeId = localStorage.getItem('momlink_demo_active')
+        deviceStore.activeDevice = parsed.find(d => d.id == activeId) || parsed[0] || null
+        localStorage.setItem('momlink_demo_interacted', 'true')
+        return
+      }
+    } catch (e) {}
+  }
+
+  // Only create demo devices if never interacted before
+  if (!hasInteracted) {
     demoDevices.forEach((demo, idx) => {
       deviceStore.devices.push({
         id: Date.now() + idx,
@@ -88,6 +104,7 @@ onMounted(() => {
       deviceStore.activeDevice = deviceStore.devices[0]
     }
     saveDevicesToStorage()
+    localStorage.setItem('momlink_demo_interacted', 'true')
   }
 
   // Fetch user in background
