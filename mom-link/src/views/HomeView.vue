@@ -38,21 +38,29 @@ onMounted(async () => {
   if (!healthStore.latest) {
     healthStore.startSimulation()
   }
-  await Promise.all([
-    healthStore.fetchStats(),
-    userStore.fetchUser(),
-    deviceStore.fetchDevices(),
-  ])
 
-  // Ensure stats has fallback data so AI score shows
-  if (!healthStore.stats) {
+  // Fetch data - but don't wait for all to complete
+  healthStore.fetchStats().then(() => {
+    // After fetch, ensure stats has fallback
+    if (!healthStore.stats) {
+      healthStore.stats = {
+        avg_heart_rate: 75,
+        avg_temperature: 36.8,
+        avg_baby_movement: 8,
+        total_logs: 50,
+      }
+    }
+  }).catch(() => {
     healthStore.stats = {
       avg_heart_rate: 75,
       avg_temperature: 36.8,
       avg_baby_movement: 8,
       total_logs: 50,
     }
-  }
+  })
+
+  userStore.fetchUser().catch(() => {})
+  deviceStore.fetchDevices().catch(() => {})
 })
 
 // AI Health Score computed

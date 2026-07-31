@@ -26,13 +26,15 @@ export const useHealthStore = defineStore('health', () => {
 
   const fetchLogs = async (limit = 100) => {
     const userStore = useUserStore()
+    const userId = userStore.user?.id || userStore.DEMO_USER_ID || 1
     loading.value = true
     error.value = null
     try {
-      const data = await api.getHealthLogs(userStore.user?.id || userStore.DEMO_USER_ID, limit)
-      logs.value = data
+      const data = await api.getHealthLogs(userId, limit)
+      logs.value = data || []
     } catch (err) {
       error.value = err.message
+      // Keep existing logs if API fails - don't clear them
     } finally {
       loading.value = false
     }
@@ -124,10 +126,12 @@ export const useHealthStore = defineStore('health', () => {
 
   const fetchLatest = async () => {
     const userStore = useUserStore()
+    const userId = userStore.user?.id || userStore.DEMO_USER_ID || 1
     try {
-      latest.value = await api.getLatestHealth(userStore.user?.id || userStore.DEMO_USER_ID)
+      const result = await api.getLatestHealth(userId)
+      latest.value = result
     } catch (err) {
-      // Generate random values based on device type
+      // Generate random values based on device type when API fails
       if (isEmergencyDevice()) {
         latest.value = {
           heart_rate: Math.floor(Math.random() * 30) + 170,
@@ -150,10 +154,14 @@ export const useHealthStore = defineStore('health', () => {
 
   const fetchStats = async () => {
     const userStore = useUserStore()
+    const userId = userStore.user?.id || userStore.DEMO_USER_ID || 1
     try {
-      stats.value = await api.getHealthStats(userStore.user?.id || userStore.DEMO_USER_ID)
+      const result = await api.getHealthStats(userId)
+      stats.value = result
     } catch (err) {
-      if (isEmergencyDevice()) {
+      // Always provide fallback data when API fails
+      const isEmergency = isEmergencyDevice()
+      if (isEmergency) {
         stats.value = {
           avg_heart_rate: Math.floor(Math.random() * 30) + 170,
           avg_temperature: parseFloat((37.8 + Math.random() * 1.2).toFixed(1)),
@@ -162,10 +170,10 @@ export const useHealthStore = defineStore('health', () => {
         }
       } else {
         stats.value = {
-          avg_heart_rate: Math.floor(Math.random() * 20) + 65,
-          avg_temperature: parseFloat((36.2 + Math.random() * 0.8).toFixed(1)),
-          avg_baby_movement: Math.floor(Math.random() * 10) + 4,
-          total_logs: Math.floor(Math.random() * 50) + 50,
+          avg_heart_rate: 75,
+          avg_temperature: 36.8,
+          avg_baby_movement: 8,
+          total_logs: 50,
         }
       }
     }
