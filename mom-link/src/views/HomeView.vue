@@ -63,22 +63,60 @@ onMounted(async () => {
   deviceStore.fetchDevices().catch(() => {})
 })
 
-// AI Health Score computed
+// AI Health Score computed - calculates from ALL metrics
 const healthScore = computed(() => {
-  if (!healthStore.stats?.avg_heart_rate) return '--'
-  // Calculate health score based on heart rate (normal is 60-100)
-  const hr = healthStore.stats.avg_heart_rate
-  if (hr < 60 || hr > 100) return Math.max(50, 100 - Math.abs(hr - 80) * 2)
-  return 97
+  const latest = healthStore.latest
+  if (!latest) return '--'
+
+  // Check for emergency conditions
+  const hr = latest.heart_rate || 0
+  const temp = latest.temperature || 36.5
+  const movement = latest.baby_movement ?? 10
+  const stress = latest.stress_level || 'Normal'
+
+  // Emergency thresholds
+  if (hr > 170 || hr < 50 || temp > 38.5 || temp < 35.5 || movement <= 2 || stress === 'High') {
+    return Math.floor(Math.random() * 20 + 15) // 15-35% for emergency
+  }
+
+  // Calculate score based on all metrics
+  let score = 100
+
+  // Heart rate (normal 60-100)
+  if (hr > 100) score -= (hr - 100) * 1.5
+  if (hr < 60) score -= (60 - hr) * 1.5
+
+  // Temperature (normal 36.1-37.5)
+  if (temp > 37.5) score -= (temp - 37.5) * 15
+  if (temp < 36.1) score -= (36.1 - temp) * 15
+
+  // Baby movement (normal 3+)
+  if (movement < 3) score -= (3 - movement) * 8
+  if (movement < 5) score -= (5 - movement) * 3
+
+  // Stress level
+  if (stress === 'High') score -= 25
+  else if (stress === 'Medium') score -= 10
+
+  return Math.max(15, Math.min(100, Math.floor(score)))
 })
 
 const healthScoreLabel = computed(() => {
-  if (!healthStore.stats?.avg_heart_rate) return 'No Data'
   const score = healthScore.value
+  if (score === '--') return 'No Data'
   if (score >= 90) return 'Excellent'
   if (score >= 75) return 'Good'
   if (score >= 60) return 'Fair'
-  return 'Needs Attention'
+  if (score >= 40) return 'Concerning'
+  return 'Critical'
+})
+
+const healthScoreColor = computed(() => {
+  const score = healthScore.value
+  if (score === '--') return '#ccc'
+  if (score >= 75) return '#00bf72'
+  if (score >= 50) return '#e26d5c'
+  return '#d9534f'
 })
 </script>
 
@@ -208,12 +246,12 @@ const healthScoreLabel = computed(() => {
       <div class="score-card">
         <h3>AI Health Score</h3>
         <div class="gauge-container">
-          <div class="gauge-arc" :style="{ background: healthStore.stats?.avg_heart_rate ? '#00bf72' : '#ccc' }">
+          <div class="gauge-arc" :style="{ background: healthScoreColor }">
             <div class="gauge-inner">
               <span class="score-val">{{ healthScore }}%</span>
             </div>
           </div>
-          <span class="score-status" :style="{ color: healthStore.stats?.avg_heart_rate ? '#00bf72' : '#888' }">{{ healthScoreLabel }}</span>
+          <span class="score-status" :style="{ color: healthScoreColor }">{{ healthScoreLabel }}</span>
         </div>
       </div>
     </div>

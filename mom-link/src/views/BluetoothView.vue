@@ -24,34 +24,79 @@ const newDevice = ref({ name: '', device_type: '', mac_address: '' })
 const isScanning = ref(false)
 const showEmergencyAlert = ref(false)
 
-// Save devices to localStorage for demo persistence
-const saveDevicesToStorage = () => {
-  localStorage.setItem('momlink_demo_devices', JSON.stringify(deviceStore.devices))
-  localStorage.setItem('momlink_demo_active', deviceStore.activeDevice?.id || null)
+// Demo devices list
+const demoDevices = [
+  { name: 'Heart Rate Monitor Pro', device_type: 'heart_rate_monitor', mac_address: '00:11:22:33:44:55' },
+  { name: 'Temp Sensor Mini', device_type: 'temperature_sensor', mac_address: '00:11:22:33:44:56' },
+  { name: 'Baby Movement Detector', device_type: 'movement_sensor', mac_address: '00:11:22:33:44:57' },
+]
+
+const emergencyDevice = {
+  name: 'Emergency Test Device',
+  device_type: 'heart_rate_monitor',
+  mac_address: '00:00:00:00:00:EMERGENCY',
+  is_emergency: true
 }
 
-// Load devices from localStorage on mount
+// Storage helpers - with try/catch for private browsing
+const saveDevicesToStorage = () => {
+  try {
+    localStorage.setItem('momlink_demo_devices', JSON.stringify(deviceStore.devices))
+    localStorage.setItem('momlink_demo_active', deviceStore.activeDevice?.id || null)
+  } catch (e) {
+    console.log('Storage save failed:', e)
+  }
+}
+
 const loadDevicesFromStorage = () => {
-  const saved = localStorage.getItem('momlink_demo_devices')
-  if (saved) {
-    try {
+  try {
+    const saved = localStorage.getItem('momlink_demo_devices')
+    if (saved) {
       const devices = JSON.parse(saved)
       if (devices.length > 0) {
         deviceStore.devices = devices
         const activeId = localStorage.getItem('momlink_demo_active')
         deviceStore.activeDevice = devices.find(d => d.id == activeId) || devices[0]
+        return true
       }
-    } catch (e) {
-      console.log('Failed to load devices from storage')
     }
+  } catch (e) {
+    console.log('Storage load failed:', e)
+  }
+  return false
+}
+
+// Initialize demo devices immediately when script loads
+const initDemoDevices = () => {
+  // First try loading from storage
+  if (loadDevicesFromStorage()) {
+    return
+  }
+
+  // If no saved data and no devices, create demo devices
+  if (deviceStore.devices.length === 0) {
+    demoDevices.forEach((demo, idx) => {
+      deviceStore.devices.push({
+        id: Date.now() + idx,
+        name: demo.name,
+        device_type: demo.device_type,
+        mac_address: demo.mac_address,
+        is_active: idx === 0 ? 1 : 0,
+        is_emergency: false,
+      })
+    })
+    if (deviceStore.devices.length > 0) {
+      deviceStore.activeDevice = deviceStore.devices[0]
+    }
+    saveDevicesToStorage()
   }
 }
 
-onMounted(async () => {
-  await userStore.fetchUser()
-  // Init demo devices (loads from storage if available, otherwise creates new demo devices)
-  initDemoDevices()
-})
+// Call init IMMEDIATELY when script runs
+initDemoDevices()
+
+// Fetch user in background
+userStore.fetchUser().catch(() => {})
 
 const goBack = () => router.push('/profile')
 
@@ -138,61 +183,6 @@ const scanBluetooth = async () => {
     console.log('Scan cancelled or failed:', err)
   } finally {
     isScanning.value = false
-  }
-}
-
-// Demo devices with mockup health data (normal)
-const demoDevices = [
-  { name: 'Heart Rate Monitor Pro', device_type: 'heart_rate_monitor', mac_address: '00:11:22:33:44:55' },
-  { name: 'Temp Sensor Mini', device_type: 'temperature_sensor', mac_address: '00:11:22:33:44:56' },
-  { name: 'Baby Movement Detector', device_type: 'movement_sensor', mac_address: '00:11:22:33:44:57' },
-]
-
-// Emergency test device with ABNORMAL values
-const emergencyDevice = {
-  name: 'Emergency Test Device',
-  device_type: 'heart_rate_monitor',
-  mac_address: '00:00:00:00:00:EMERGENCY',
-  is_emergency: true
-}
-
-// Initialize with demo devices if none exist
-const initDemoDevices = () => {
-  // Check from localStorage first - if has data, don't init again
-  const saved = localStorage.getItem('momlink_demo_devices')
-  if (saved) {
-    try {
-      const devices = JSON.parse(saved)
-      if (devices.length > 0) {
-        deviceStore.devices = devices
-        const activeId = localStorage.getItem('momlink_demo_active')
-        deviceStore.activeDevice = devices.find(d => d.id == activeId) || devices[0]
-        return // has data, no need to init
-      }
-    } catch (e) {}
-  }
-
-  // No saved data, init demo devices
-  if (deviceStore.devices.length === 0) {
-    const initialDevices = [
-      { name: 'Heart Rate Monitor Pro', device_type: 'heart_rate_monitor', mac_address: '00:11:22:33:44:55' },
-      { name: 'Temp Sensor Mini', device_type: 'temperature_sensor', mac_address: '00:11:22:33:44:56' },
-      { name: 'Baby Movement Detector', device_type: 'movement_sensor', mac_address: '00:11:22:33:44:57' },
-    ]
-    initialDevices.forEach((demo, idx) => {
-      deviceStore.devices.push({
-        id: Date.now() + idx,
-        name: demo.name,
-        device_type: demo.device_type,
-        mac_address: demo.mac_address,
-        is_active: idx === 0 ? 1 : 0,
-        is_emergency: false,
-      })
-    })
-    deviceStore.activeDevice = deviceStore.devices[0]
-    // Save immediately after init
-    localStorage.setItem('momlink_demo_devices', JSON.stringify(deviceStore.devices))
-    localStorage.setItem('momlink_demo_active', deviceStore.activeDevice?.id || null)
   }
 }
 
