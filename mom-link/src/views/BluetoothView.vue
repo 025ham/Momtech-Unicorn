@@ -49,11 +49,8 @@ const loadDevicesFromStorage = () => {
 
 onMounted(async () => {
   await userStore.fetchUser()
-  // Try loading from storage first, then fetch from API
-  loadDevicesFromStorage()
-  if (deviceStore.devices.length === 0) {
-    await deviceStore.fetchDevices()
-  }
+  // Init demo devices (loads from storage if available, otherwise creates new demo devices)
+  initDemoDevices()
 })
 
 const goBack = () => router.push('/profile')
@@ -159,6 +156,46 @@ const emergencyDevice = {
   is_emergency: true
 }
 
+// Initialize with demo devices if none exist
+const initDemoDevices = () => {
+  // Check from localStorage first - if has data, don't init again
+  const saved = localStorage.getItem('momlink_demo_devices')
+  if (saved) {
+    try {
+      const devices = JSON.parse(saved)
+      if (devices.length > 0) {
+        deviceStore.devices = devices
+        const activeId = localStorage.getItem('momlink_demo_active')
+        deviceStore.activeDevice = devices.find(d => d.id == activeId) || devices[0]
+        return // has data, no need to init
+      }
+    } catch (e) {}
+  }
+
+  // No saved data, init demo devices
+  if (deviceStore.devices.length === 0) {
+    const initialDevices = [
+      { name: 'Heart Rate Monitor Pro', device_type: 'heart_rate_monitor', mac_address: '00:11:22:33:44:55' },
+      { name: 'Temp Sensor Mini', device_type: 'temperature_sensor', mac_address: '00:11:22:33:44:56' },
+      { name: 'Baby Movement Detector', device_type: 'movement_sensor', mac_address: '00:11:22:33:44:57' },
+    ]
+    initialDevices.forEach((demo, idx) => {
+      deviceStore.devices.push({
+        id: Date.now() + idx,
+        name: demo.name,
+        device_type: demo.device_type,
+        mac_address: demo.mac_address,
+        is_active: idx === 0 ? 1 : 0,
+        is_emergency: false,
+      })
+    })
+    deviceStore.activeDevice = deviceStore.devices[0]
+    // Save immediately after init
+    localStorage.setItem('momlink_demo_devices', JSON.stringify(deviceStore.devices))
+    localStorage.setItem('momlink_demo_active', deviceStore.activeDevice?.id || null)
+  }
+}
+
 const addDemoDevice = async (demo) => {
   // Check if device already exists
   if (deviceStore.devices.some(d => d.mac_address === demo.mac_address)) {
@@ -211,47 +248,22 @@ const addEmergencyDevice = async () => {
   }
   try {
     // Add directly to local state for demo (bypass API for testing)
+    // DON'T set is_active here - user must explicitly select it
     const newDevice = {
       id: Date.now(),
       name: emergencyDevice.name,
       device_type: emergencyDevice.device_type,
       mac_address: emergencyDevice.mac_address,
-      is_active: 1,
+      is_active: 0, // NOT active yet - user must select
       is_emergency: true,
     }
     deviceStore.devices.push(newDevice)
-    deviceStore.activeDevice = newDevice
+    // Don't set activeDevice here - user must select
 
     // Save to localStorage
-    saveDevicesToStorage()
+    localStorage.setItem('momlink_demo_devices', JSON.stringify(deviceStore.devices))
+    localStorage.setItem('momlink_demo_active', null) // no device active yet
 
-    // DON'T show emergency alert immediately - wait for user to select it
-    // The selectDevice() function will show it when explicitly selected
-
-    // Also update healthStore.latest with emergency values
-    healthStore.latest = {
-      heart_rate: Math.floor(Math.random() * 30) + 170,
-      temperature: parseFloat((37.8 + Math.random() * 1.2).toFixed(1)),
-      baby_movement: Math.floor(Math.random() * 3),
-      stress_level: 'High',
-      logged_at: new Date().toISOString(),
-    }
-
-    // Add ABNORMAL health log history
-    const now = Date.now()
-    for (let i = 0; i < 20; i++) {
-      const loggedAt = new Date(now - i * 3600000 * 4).toISOString()
-      // ABNORMAL values: very high heart rate, high temperature, low baby movement
-      const data = {
-        device_id: newDevice.id,
-        heart_rate: Math.floor(Math.random() * 30) + 170,  // 170-200 bpm (DANGER!)
-        temperature: parseFloat((37.8 + Math.random() * 1.2).toFixed(1)), // 37.8-39.0°C (FEVER!)
-        baby_movement: Math.floor(Math.random() * 3), // 0-2 times (LOW!)
-        stress_level: 'High',
-        logged_at: loggedAt,
-      }
-      healthStore.logs.unshift({ ...data, id: Date.now() + i })
-    }
   } catch (err) {
     alert('Failed to add device: ' + err.message)
   }
