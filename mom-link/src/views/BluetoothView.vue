@@ -24,9 +24,36 @@ const newDevice = ref({ name: '', device_type: '', mac_address: '' })
 const isScanning = ref(false)
 const showEmergencyAlert = ref(false)
 
+// Save devices to localStorage for demo persistence
+const saveDevicesToStorage = () => {
+  localStorage.setItem('momlink_demo_devices', JSON.stringify(deviceStore.devices))
+  localStorage.setItem('momlink_demo_active', deviceStore.activeDevice?.id || null)
+}
+
+// Load devices from localStorage on mount
+const loadDevicesFromStorage = () => {
+  const saved = localStorage.getItem('momlink_demo_devices')
+  if (saved) {
+    try {
+      const devices = JSON.parse(saved)
+      if (devices.length > 0) {
+        deviceStore.devices = devices
+        const activeId = localStorage.getItem('momlink_demo_active')
+        deviceStore.activeDevice = devices.find(d => d.id == activeId) || devices[0]
+      }
+    } catch (e) {
+      console.log('Failed to load devices from storage')
+    }
+  }
+}
+
 onMounted(async () => {
   await userStore.fetchUser()
-  await deviceStore.fetchDevices()
+  // Try loading from storage first, then fetch from API
+  loadDevicesFromStorage()
+  if (deviceStore.devices.length === 0) {
+    await deviceStore.fetchDevices()
+  }
 })
 
 const goBack = () => router.push('/profile')
@@ -36,6 +63,9 @@ const selectDevice = async (id) => {
     // Update local state directly
     deviceStore.devices.forEach(d => d.is_active = d.id === id ? 1 : 0)
     deviceStore.activeDevice = deviceStore.devices.find(d => d.id === id)
+
+    // Save selection to localStorage
+    saveDevicesToStorage()
 
     // Also update on server (may fail silently)
     try {
@@ -83,6 +113,8 @@ const deleteDevice = async (id) => {
   if (deviceStore.activeDevice?.id === id) {
     deviceStore.activeDevice = deviceStore.devices[0] || null
   }
+  // Save to localStorage
+  saveDevicesToStorage()
   // Also try API delete (may fail silently)
   try {
     await deviceStore.deleteDevice(id)
@@ -148,6 +180,9 @@ const addDemoDevice = async (demo) => {
       deviceStore.activeDevice = newDevice
     }
 
+    // Save to localStorage for persistence
+    saveDevicesToStorage()
+
     // Add mockup health log history for this device (ALL metrics in one device)
     const now = Date.now()
     for (let i = 0; i < 20; i++) {
@@ -186,6 +221,9 @@ const addEmergencyDevice = async () => {
     }
     deviceStore.devices.push(newDevice)
     deviceStore.activeDevice = newDevice
+
+    // Save to localStorage
+    saveDevicesToStorage()
 
     // DON'T show emergency alert immediately - wait for user to select it
     // The selectDevice() function will show it when explicitly selected
