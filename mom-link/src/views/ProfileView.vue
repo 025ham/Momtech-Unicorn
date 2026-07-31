@@ -11,10 +11,6 @@ import IconHospital from '@/components/icons/IconHospital.vue'
 import IconBluetooth from '@/components/icons/IconBluetooth.vue'
 import IconDownload from '@/components/icons/IconDownload.vue'
 import IconLogout from '@/components/icons/IconLogout.vue'
-import IconHome from '@/components/icons/IconHome.vue'
-import IconTrendUp from '@/components/icons/IconTrendUp.vue'
-import IconSmile from '@/components/icons/IconSmile.vue'
-import IconUser from '@/components/icons/IconUser.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -80,37 +76,10 @@ const downloadCSV = () => {
   URL.revokeObjectURL(url)
   showExportModal.value = false
 }
-
-const scrollContainer = ref(null)
-let isDown = false
-let startY, scrollTop
-
-const handleMouseDown = (e) => {
-  isDown = true
-  scrollContainer.value?.classList.add('active-drag')
-  startY = e.pageY - scrollContainer.value?.offsetTop
-  scrollTop = scrollContainer.value?.scrollTop
-}
-const handleMouseLeave = () => { isDown = false; scrollContainer.value?.classList.remove('active-drag') }
-const handleMouseUp = () => { isDown = false; scrollContainer.value?.classList.remove('active-drag') }
-const handleMouseMove = (e) => {
-  if (!isDown) return
-  e.preventDefault()
-  const y = e.pageY - scrollContainer.value?.offsetTop
-  const walk = (y - startY) * 1.5
-  scrollContainer.value.scrollTop = scrollTop - walk
-}
 </script>
 
 <template>
-  <div
-    class="profile-view"
-    ref="scrollContainer"
-    @mousedown="handleMouseDown"
-    @mouseleave="handleMouseLeave"
-    @mouseup="handleMouseUp"
-    @mousemove="handleMouseMove"
-  >
+  <div class="profile-view">
     <!-- Top Nav -->
     <header class="app-header">
       <button class="back-btn" @click="goBack"><IconBack :size="18" /></button>
@@ -246,14 +215,6 @@ const handleMouseMove = (e) => {
     <section class="card account-card">
       <button class="account-btn btn-logout"><IconLogout :size="16" /> Logout</button>
     </section>
-
-    <!-- Bottom Nav-->
-    <nav class="bottom-nav">
-      <button class="nav-item" @click="router.push('/')"><span class="nav-icon"><IconHome :size="20" /></span><span class="nav-label">Home</span></button>
-      <button class="nav-item" @click="router.push('/monitor')"><span class="nav-icon"><IconTrendUp :size="20" /></span><span class="nav-label">Monitor</span></button>
-      <button class="nav-item" @click="router.push('/ai-analysis')"><span class="nav-icon"><IconSmile :size="20" /></span><span class="nav-label">AI Analysis</span></button>
-      <button class="nav-item active"><span class="nav-icon"><IconUser :size="20" color="#5DC6BA" /></span><span class="nav-label">Profile</span></button>
-    </nav>
   </div>
 </template>
 
@@ -264,15 +225,11 @@ const handleMouseMove = (e) => {
   height: 100%;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: 110px;
+  padding-bottom: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  cursor: grab;
-  user-select: none;
 }
-.profile-view.active-drag { cursor: grabbing; }
-.profile-view::-webkit-scrollbar { display: none; }
 
 .app-header {
   display: flex;
@@ -434,43 +391,4 @@ const handleMouseMove = (e) => {
 
 .account-btn { width: 100%; background: none; border: none; padding: 14px; font-size: 14px; font-weight: 500; color: #333; cursor: pointer; border-radius: 12px; text-align: left; }
 .btn-logout { color: #d9534f; }
-
-.bottom-nav {
-  position: absolute; bottom: 0; left: 0; width: 100%;
-  background-color: #ffffff; display: flex; justify-content: space-around;
-  padding: 12px 0 24px 0; border-top: 1px solid #f0eae1;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04); z-index: 100;
-}
-.nav-item {
-  background: none;
-  border: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  color: #888;
-  cursor: pointer;
-  position: relative;
-  padding: 4px 12px;
-}
-.nav-item::after {
-  content: '';
-  position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 3px;
-  background-color: #5DC6BA;
-  border-radius: 2px;
-  transition: width 0.2s ease;
-}
-.nav-item.active {
-  color: #5DC6BA;
-}
-.nav-item.active::after {
-  width: 24px;
-}
-.nav-icon { font-size: 18px; }
-.nav-label { font-size: 10px; font-weight: 500; }
 </style>

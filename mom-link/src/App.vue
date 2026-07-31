@@ -19,6 +19,7 @@ html, body {
   background-color: #e5e5e5;
   min-height: 100vh;
   width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -29,6 +30,7 @@ body {
 .phone-wrapper {
   width: 430px;
   min-height: 100vh;
+  max-height: 100vh;
   background-color: #fcf8f2;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
   display: flex;
@@ -36,6 +38,7 @@ body {
   position: relative;
   border-radius: 40px;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 @media (max-width: 430px) {
@@ -50,6 +53,7 @@ body {
   .phone-wrapper {
     width: 100%;
     min-height: 100vh;
+    max-height: 100vh;
     border-radius: 0;
     box-shadow: none;
   }

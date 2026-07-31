@@ -18,8 +18,6 @@ import IconSmile from '@/components/icons/IconSmile.vue'
 import IconTrendUp from '@/components/icons/IconTrendUp.vue'
 import IconDocument from '@/components/icons/IconDocument.vue'
 import IconWarning from '@/components/icons/IconWarning.vue'
-import IconHome from '@/components/icons/IconHome.vue'
-import IconUser from '@/components/icons/IconUser.vue'
 
 const router = useRouter()
 const healthStore = useHealthStore()
@@ -46,48 +44,10 @@ onMounted(async () => {
     deviceStore.fetchDevices(),
   ])
 })
-
-// ระบบ Click , Drag
-const scrollContainer = ref(null)
-let isDown = false
-let startY
-let scrollTop
-
-const handleMouseDown = (e) => {
-  isDown = true
-  scrollContainer.value.classList.add('active-drag')
-  startY = e.pageY - scrollContainer.value.offsetTop
-  scrollTop = scrollContainer.value.scrollTop
-}
-
-const handleMouseLeave = () => {
-  isDown = false
-  scrollContainer.value.classList.remove('active-drag')
-}
-
-const handleMouseUp = () => {
-  isDown = false
-  scrollContainer.value.classList.remove('active-drag')
-}
-
-const handleMouseMove = (e) => {
-  if (!isDown) return
-  e.preventDefault()
-  const y = e.pageY - scrollContainer.value.offsetTop
-  const walk = (y - startY) * 1.5
-  scrollContainer.value.scrollTop = scrollTop - walk
-}
 </script>
 
 <template>
-  <div
-    class="home-view"
-    ref="scrollContainer"
-    @mousedown="handleMouseDown"
-    @mouseleave="handleMouseLeave"
-    @mouseup="handleMouseUp"
-    @mousemove="handleMouseMove"
-  >
+  <div class="home-view">
     <header class="app-header">
       <div class="user-profile">
         <span class="avatar"><IconWave :size="28" /></span>
@@ -247,49 +207,19 @@ const handleMouseMove = (e) => {
         </button>
       </div>
     </section>
-
-    <nav class="bottom-nav">
-      <button class="nav-item active">
-        <span class="nav-icon"><IconHome :size="20" color="#5DC6BA" /></span>
-        <span class="nav-label">Home</span>
-      </button>
-      <button class="nav-item" @click="router.push('/monitor')">
-        <span class="nav-icon"><IconTrendUp :size="20" /></span>
-        <span class="nav-label">Monitor</span>
-      </button>
-      <button class="nav-item" @click="router.push('/ai-analysis')">
-        <span class="nav-icon"><IconSmile :size="20" /></span>
-        <span class="nav-label">AI Analysis</span>
-      </button>
-      <button class="nav-item" @click="router.push('/profile')">
-        <span class="nav-icon"><IconUser :size="20" /></span>
-        <span class="nav-label">Profile</span>
-      </button>
-    </nav>
   </div>
 </template>
 
 <style scoped>
-/* CSS คงเดิมตามที่คุณเขียนไว้ได้เลยครับ... */
 .home-view {
   background-color: #fcf8f2;
-  width: 100%; /* ยืดเต็มกรอบ */
-  height: 100%; /* ยืดเต็มกรอบ */
-  overflow-y: auto;
+  width: 100%;
+  min-height: 100%;
   padding: 16px;
-  padding-bottom: 110px; /* เว้นระยะหลบ Bottom Nav */
+  padding-bottom: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  cursor: grab;
-  user-select: none;
-  position: relative; /* ให้ notification panel วัดตำแหน่งจาก view นี้ */
-}
-.home-view.active-drag {
-  cursor: grabbing;
-}
-.home-view::-webkit-scrollbar {
-  display: none;
 }
 
 /* Header */

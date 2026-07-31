@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import MainLayout from '../views/MainLayout.vue'
 import HomeView from '../views/HomeView.vue'
 import MonitorView from '@/views/MonitorView.vue'
 import AIAnalysisView from '@/views/AIAnalysisView.vue'
@@ -12,38 +13,20 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView
-    },
-    {
-      path: '/monitor',
-      name: 'monitor',
-      component: MonitorView
-    },
-    {
-      path: '/ai-analysis',
-      name: 'ai-analysis',
-      component: AIAnalysisView
-    },
-    {
-      path: '/profile',
-      name: 'profile',
-      component: ProfileView
-    },
-    {
-      path: '/health-report',
-      name: 'health-report',
-      component: HealthReportView
+      component: MainLayout,
+      children: [
+        { path: '', name: 'home', component: HomeView },
+        { path: 'monitor', name: 'monitor', component: MonitorView },
+        { path: 'ai-analysis', name: 'ai-analysis', component: AIAnalysisView },
+        { path: 'profile', name: 'profile', component: ProfileView },
+        { path: 'health-report', name: 'health-report', component: HealthReportView },
+        { path: 'bluetooth', name: 'bluetooth', component: BluetoothView },
+      ]
     },
     {
       path: '/emergency',
       name: 'emergency',
       component: EmergencyView
-    },
-    {
-      path: '/bluetooth',
-      name: 'bluetooth',
-      component: BluetoothView
     }
   ]
 })

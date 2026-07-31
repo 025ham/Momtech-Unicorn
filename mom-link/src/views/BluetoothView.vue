@@ -13,10 +13,6 @@ import IconWarning from '@/components/icons/IconWarning.vue'
 import IconTrash from '@/components/icons/IconTrash.vue'
 import IconClose from '@/components/icons/IconClose.vue'
 import IconSiren from '@/components/icons/IconSiren.vue'
-import IconHome from '@/components/icons/IconHome.vue'
-import IconTrendUp from '@/components/icons/IconTrendUp.vue'
-import IconSmile from '@/components/icons/IconSmile.vue'
-import IconUser from '@/components/icons/IconUser.vue'
 
 const router = useRouter()
 const deviceStore = useDeviceStore()
@@ -37,12 +33,21 @@ const goBack = () => router.push('/profile')
 
 const selectDevice = async (id) => {
   try {
-    await deviceStore.setActive(id)
+    // Update local state directly
+    deviceStore.devices.forEach(d => d.is_active = d.id === id ? 1 : 0)
+    deviceStore.activeDevice = deviceStore.devices.find(d => d.id === id)
+
+    // Also update on server (may fail silently)
+    try {
+      await deviceStore.setActive(id)
+    } catch (e) {
+      // Ignore API errors for demo
+    }
+
     // Check if selected device is emergency device
     const device = deviceStore.devices.find(d => d.id === id)
     if (device?.name?.includes('Emergency')) {
       showEmergencyAlert.value = true
-      // Stay until user dismisses
     }
   } catch (err) {
     alert('Failed: ' + err.message)
@@ -120,27 +125,34 @@ const addDemoDevice = async (demo) => {
     return
   }
   try {
-    const device = await deviceStore.addDevice({
+    // Add directly to local state for demo (bypass API for testing)
+    const newDevice = {
+      id: Date.now(),
       name: demo.name,
       device_type: demo.device_type,
       mac_address: demo.mac_address,
-    })
+      is_active: deviceStore.devices.length === 0 ? 1 : 0,
+      is_emergency: demo.is_emergency || false,
+    }
+    deviceStore.devices.push(newDevice)
+    if (!deviceStore.activeDevice) {
+      deviceStore.activeDevice = newDevice
+    }
 
     // Add mockup health log history for this device (ALL metrics in one device)
     const now = Date.now()
     for (let i = 0; i < 20; i++) {
-      const loggedAt = new Date(now - i * 3600000 * 4).toISOString() // every 4 hours
+      const loggedAt = new Date(now - i * 3600000 * 4).toISOString()
       const data = {
-        device_id: device.id,
+        device_id: newDevice.id,
         heart_rate: Math.floor(Math.random() * 20) + 65,  // 65-85 bpm
-        temperature: parseFloat((36.2 + Math.random() * 0.8).toFixed(1)), // 36.2-37.0 °C
-        baby_movement: Math.floor(Math.random() * 10) + 5, // 5-15 times
+        temperature: parseFloat((36.2 + Math.random() * 0.8).toFixed(1)),
+        baby_movement: Math.floor(Math.random() * 10) + 5,
         stress_level: ['Low', 'Normal', 'Low', 'Low'][Math.floor(Math.random() * 4)],
         logged_at: loggedAt,
       }
-      await healthStore.addLog(data)
+      healthStore.logs.unshift({ ...data, id: Date.now() + i })
     }
-    // Don't call fetchDevices() - it would reset local state
   } catch (err) {
     alert('Failed to add device: ' + err.message)
   }
@@ -154,11 +166,17 @@ const addEmergencyDevice = async () => {
     return
   }
   try {
-    const device = await deviceStore.addDevice({
+    // Add directly to local state for demo (bypass API for testing)
+    const newDevice = {
+      id: Date.now(),
       name: emergencyDevice.name,
       device_type: emergencyDevice.device_type,
       mac_address: emergencyDevice.mac_address,
-    })
+      is_active: 1,
+      is_emergency: true,
+    }
+    deviceStore.devices.push(newDevice)
+    deviceStore.activeDevice = newDevice
 
     // Add ABNORMAL health log history
     const now = Date.now()
@@ -166,48 +184,23 @@ const addEmergencyDevice = async () => {
       const loggedAt = new Date(now - i * 3600000 * 4).toISOString()
       // ABNORMAL values: very high heart rate, high temperature, low baby movement
       const data = {
-        device_id: device.id,
+        device_id: newDevice.id,
         heart_rate: Math.floor(Math.random() * 30) + 170,  // 170-200 bpm (DANGER!)
         temperature: parseFloat((37.8 + Math.random() * 1.2).toFixed(1)), // 37.8-39.0°C (FEVER!)
         baby_movement: Math.floor(Math.random() * 3), // 0-2 times (LOW!)
-        stress_level: ['High', 'Very High', 'High'][Math.floor(Math.random() * 3)],
+        stress_level: 'High',
         logged_at: loggedAt,
       }
-      await healthStore.addLog(data)
+      healthStore.logs.unshift({ ...data, id: Date.now() + i })
     }
   } catch (err) {
     alert('Failed to add device: ' + err.message)
   }
 }
-
-const scrollContainer = ref(null)
-let isDown = false, startY, scrollTop
-
-const handleMouseDown = (e) => {
-  isDown = true
-  scrollContainer.value?.classList.add('active-drag')
-  startY = e.pageY - scrollContainer.value?.offsetTop
-  scrollTop = scrollContainer.value?.scrollTop
-}
-const handleMouseLeave = () => { isDown = false; scrollContainer.value?.classList.remove('active-drag') }
-const handleMouseUp = () => { isDown = false; scrollContainer.value?.classList.remove('active-drag') }
-const handleMouseMove = (e) => {
-  if (!isDown) return
-  e.preventDefault()
-  const y = e.pageY - scrollContainer.value?.offsetTop
-  scrollContainer.value.scrollTop = scrollTop - (y - startY) * 1.5
-}
 </script>
 
 <template>
-  <div
-    class="bluetooth-view"
-    ref="scrollContainer"
-    @mousedown="handleMouseDown"
-    @mouseleave="handleMouseLeave"
-    @mouseup="handleMouseUp"
-    @mousemove="handleMouseMove"
-  >
+  <div class="bluetooth-view">
     <!-- Emergency Alert Overlay -->
     <div v-if="showEmergencyAlert" class="emergency-overlay">
       <div class="emergency-alert-box">
@@ -327,26 +320,6 @@ const handleMouseMove = (e) => {
         <button class="btn-add" @click="addDevice">Add Device</button>
       </div>
     </section>
-
-    <!-- Bottom Nav-->
-    <nav class="bottom-nav">
-      <button class="nav-item" @click="router.push('/')">
-        <span class="nav-icon"><IconHome :size="20" /></span>
-        <span class="nav-label">Home</span>
-      </button>
-      <button class="nav-item" @click="router.push('/monitor')">
-        <span class="nav-icon"><IconTrendUp :size="20" /></span>
-        <span class="nav-label">Monitor</span>
-      </button>
-      <button class="nav-item" @click="router.push('/ai-analysis')">
-        <span class="nav-icon"><IconSmile :size="20" /></span>
-        <span class="nav-label">AI Analysis</span>
-      </button>
-      <button class="nav-item" @click="router.push('/profile')">
-        <span class="nav-icon"><IconUser :size="20" /></span>
-        <span class="nav-label">Profile</span>
-      </button>
-    </nav>
   </div>
 </template>
 
@@ -357,15 +330,11 @@ const handleMouseMove = (e) => {
   height: 100%;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: 110px;
+  padding-bottom: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  cursor: grab;
-  user-select: none;
 }
-.bluetooth-view.active-drag { cursor: grabbing; }
-.bluetooth-view::-webkit-scrollbar { display: none; }
 
 .app-header {
   display: flex;
@@ -522,47 +491,4 @@ const handleMouseMove = (e) => {
   font-size: 14px;
   cursor: pointer;
 }
-
-/* Bottom Nav */
-.bottom-nav {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: #ffffff;
-  display: flex;
-  justify-content: space-around;
-  padding: 12px 0 24px 0;
-  border-top: 1px solid #f0eae1;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
-  z-index: 100;
-}
-.nav-item {
-  background: none;
-  border: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  color: #888;
-  cursor: pointer;
-  position: relative;
-  padding: 4px 12px;
-}
-.nav-item::after {
-  content: '';
-  position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 3px;
-  background-color: #5DC6BA;
-  border-radius: 2px;
-  transition: width 0.2s ease;
-}
-.nav-item.active { color: #5DC6BA; }
-.nav-item.active::after { width: 24px; }
-.nav-icon { font-size: 18px; }
-.nav-label { font-size: 10px; font-weight: 500; }
 </style>

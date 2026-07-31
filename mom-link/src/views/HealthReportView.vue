@@ -10,10 +10,6 @@ import IconBaby from '@/components/icons/IconBaby.vue'
 import IconTemperature from '@/components/icons/IconTemperature.vue'
 import IconDownload from '@/components/icons/IconDownload.vue'
 import IconShare from '@/components/icons/IconShare.vue'
-import IconHome from '@/components/icons/IconHome.vue'
-import IconTrendUp from '@/components/icons/IconTrendUp.vue'
-import IconSmile from '@/components/icons/IconSmile.vue'
-import IconUser from '@/components/icons/IconUser.vue'
 import IconDoctor from '@/components/icons/IconDoctor.vue'
 import IconPhone from '@/components/icons/IconPhone.vue'
 import IconClose from '@/components/icons/IconClose.vue'
@@ -32,39 +28,217 @@ const goBack = () => {
   router.push('/')
 }
 
-// Time filter
-const activeFilter = ref('today')
-const filters = ['today', 'week', 'month']
+// Time filter - add 'day' option for more granular view
+const activeFilter = ref('week')
+const filters = [
+  { key: 'day', label: 'Day' },
+  { key: 'week', label: 'Week' },
+  { key: 'month', label: 'Month' }
+]
 
 const setFilter = (filter) => {
   activeFilter.value = filter
-  applyFilter()
 }
 
-// Apply time filter to logs
-const applyFilter = () => {
+// Get filtered logs and group for display
+const filteredLogs = computed(() => {
   const logs = healthStore.logs
   if (!logs.length) return []
 
   const now = new Date()
   let cutoffDate = new Date()
 
-  if (activeFilter.value === 'today') {
+  if (activeFilter.value === 'day') {
+    // Today only - show by hour
     cutoffDate.setHours(0, 0, 0, 0)
   } else if (activeFilter.value === 'week') {
+    // Last 7 days - show by day
     cutoffDate.setDate(now.getDate() - 7)
   } else if (activeFilter.value === 'month') {
-    cutoffDate.setMonth(now.getMonth() - 1)
+    // Last 30 days - show by week
+    cutoffDate.setDate(now.getDate() - 30)
   }
 
   return logs.filter(l => new Date(l.logged_at) >= cutoffDate)
-}
+})
 
-// Real data from store with filter applied
-const filteredLogs = computed(() => applyFilter())
-const heartRateData = computed(() => filteredLogs.value.map(l => l.heart_rate).filter(Boolean))
-const movementData = computed(() => filteredLogs.value.map(l => l.baby_movement).filter(Boolean))
-const temperatureData = computed(() => filteredLogs.value.map(l => l.temperature).filter(Boolean))
+// Group data by time period for chart labels
+const chartLabels = computed(() => {
+  const logs = filteredLogs.value
+  if (!logs.length) return []
+
+  if (activeFilter.value === 'day') {
+    // Group by hour for day view
+    const hours = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const hour = d.getHours()
+      if (!hours[hour]) hours[hour] = []
+      hours[hour].push(l)
+    })
+    return Object.keys(hours).sort((a, b) => a - b).map(h => {
+      const avgHR = Math.round(hours[h].reduce((sum, l) => sum + (l.heart_rate || 0), 0) / hours[h].length)
+      return { label: `${h}:00`, value: avgHR }
+    })
+  } else if (activeFilter.value === 'week') {
+    // Group by day for week view - show day name
+    const days = {}
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const day = d.getDay()
+      if (!days[day]) days[day] = []
+      days[day].push(l)
+    })
+    return Object.keys(days).sort((a, b) => a - b).map(d => {
+      const avgHR = Math.round(days[d].reduce((sum, l) => sum + (l.heart_rate || 0), 0) / days[d].length)
+      return { label: dayNames[parseInt(d)], value: avgHR }
+    })
+  } else {
+    // Group by week for month view - show week number
+    const weeks = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const weekNum = Math.ceil((d.getDate()) / 7)
+      if (!weeks[weekNum]) weeks[weekNum] = []
+      weeks[weekNum].push(l)
+    })
+    return Object.keys(weeks).sort((a, b) => a - b).map(w => {
+      const avgHR = Math.round(weeks[w].reduce((sum, l) => sum + (l.heart_rate || 0), 0) / weeks[w].length)
+      return { label: `Week ${w}`, value: avgHR }
+    })
+  }
+})
+
+// Chart data with proper grouping
+const heartRateData = computed(() => {
+  const logs = filteredLogs.value
+  if (!logs.length) return []
+
+  if (activeFilter.value === 'day') {
+    const hours = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const hour = d.getHours()
+      if (!hours[hour]) hours[hour] = []
+      hours[hour].push(l.heart_rate)
+    })
+    return Object.keys(hours).sort((a, b) => a - b).map(h => {
+      const vals = hours[h].filter(Boolean)
+      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
+    })
+  } else if (activeFilter.value === 'week') {
+    const days = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const day = d.getDay()
+      if (!days[day]) days[day] = []
+      days[day].push(l.heart_rate)
+    })
+    return Object.keys(days).sort((a, b) => a - b).map(d => {
+      const vals = days[d].filter(Boolean)
+      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
+    })
+  } else {
+    const weeks = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const weekNum = Math.ceil(d.getDate() / 7)
+      if (!weeks[weekNum]) weeks[weekNum] = []
+      weeks[weekNum].push(l.heart_rate)
+    })
+    return Object.keys(weeks).sort((a, b) => a - b).map(w => {
+      const vals = weeks[w].filter(Boolean)
+      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
+    })
+  }
+})
+
+const movementData = computed(() => {
+  const logs = filteredLogs.value
+  if (!logs.length) return []
+
+  if (activeFilter.value === 'day') {
+    const hours = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const hour = d.getHours()
+      if (!hours[hour]) hours[hour] = []
+      hours[hour].push(l.baby_movement)
+    })
+    return Object.keys(hours).sort((a, b) => a - b).map(h => {
+      const vals = hours[h].filter(v => v != null)
+      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
+    })
+  } else if (activeFilter.value === 'week') {
+    const days = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const day = d.getDay()
+      if (!days[day]) days[day] = []
+      days[day].push(l.baby_movement)
+    })
+    return Object.keys(days).sort((a, b) => a - b).map(d => {
+      const vals = days[d].filter(v => v != null)
+      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
+    })
+  } else {
+    const weeks = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const weekNum = Math.ceil(d.getDate() / 7)
+      if (!weeks[weekNum]) weeks[weekNum] = []
+      weeks[weekNum].push(l.baby_movement)
+    })
+    return Object.keys(weeks).sort((a, b) => a - b).map(w => {
+      const vals = weeks[w].filter(v => v != null)
+      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
+    })
+  }
+})
+
+const temperatureData = computed(() => {
+  const logs = filteredLogs.value
+  if (!logs.length) return []
+
+  if (activeFilter.value === 'day') {
+    const hours = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const hour = d.getHours()
+      if (!hours[hour]) hours[hour] = []
+      hours[hour].push(l.temperature)
+    })
+    return Object.keys(hours).sort((a, b) => a - b).map(h => {
+      const vals = hours[h].filter(Boolean)
+      return vals.length ? parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : null
+    })
+  } else if (activeFilter.value === 'week') {
+    const days = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const day = d.getDay()
+      if (!days[day]) days[day] = []
+      days[day].push(l.temperature)
+    })
+    return Object.keys(days).sort((a, b) => a - b).map(d => {
+      const vals = days[d].filter(Boolean)
+      return vals.length ? parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : null
+    })
+  } else {
+    const weeks = {}
+    logs.forEach(l => {
+      const d = new Date(l.logged_at)
+      const weekNum = Math.ceil(d.getDate() / 7)
+      if (!weeks[weekNum]) weeks[weekNum] = []
+      weeks[weekNum].push(l.temperature)
+    })
+    return Object.keys(weeks).sort((a, b) => a - b).map(w => {
+      const vals = weeks[w].filter(Boolean)
+      return vals.length ? parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : null
+    })
+  }
+})
 
 const maxHR = 180
 const minHR = 60
@@ -254,37 +428,10 @@ const downloadPDF = () => {
     printWindow.print()
   }
 }
-
-const scrollContainer = ref(null)
-let isDown = false
-let startY, scrollTop
-
-const handleMouseDown = (e) => {
-  isDown = true
-  scrollContainer.value.classList.add('active-drag')
-  startY = e.pageY - scrollContainer.value.offsetTop
-  scrollTop = scrollContainer.value.scrollTop
-}
-const handleMouseLeave = () => { isDown = false; scrollContainer.value.classList.remove('active-drag') }
-const handleMouseUp = () => { isDown = false; scrollContainer.value.classList.remove('active-drag') }
-const handleMouseMove = (e) => {
-  if (!isDown) return
-  e.preventDefault()
-  const y = e.pageY - scrollContainer.value.offsetTop
-  const walk = (y - startY) * 1.5
-  scrollContainer.value.scrollTop = scrollTop - walk
-}
 </script>
 
 <template>
-  <div
-    class="health-report-view"
-    ref="scrollContainer"
-    @mousedown="handleMouseDown"
-    @mouseleave="handleMouseLeave"
-    @mouseup="handleMouseUp"
-    @mousemove="handleMouseMove"
-  >
+  <div class="health-report-view">
     <!-- Top Nav -->
     <header class="app-header">
       <button class="back-btn" @click="goBack"><IconBack :size="18" /></button>
@@ -296,14 +443,19 @@ const handleMouseMove = (e) => {
     <section class="filter-section">
       <button
         v-for="f in filters"
-        :key="f"
+        :key="f.key"
         class="filter-btn"
-        :class="{ active: activeFilter === f }"
-        @click="setFilter(f)"
+        :class="{ active: activeFilter === f.key }"
+        @click="setFilter(f.key)"
       >
-        {{ f.charAt(0).toUpperCase() + f.slice(1) }}
+        {{ f.label }}
       </button>
     </section>
+
+    <!-- X-Axis Labels -->
+    <div class="chart-labels">
+      <span v-for="(label, idx) in chartLabels" :key="idx" class="chart-label">{{ label.label }}</span>
+    </div>
 
     <!-- Heart Rate Chart -->
     <section class="card chart-card">
@@ -411,26 +563,6 @@ const handleMouseMove = (e) => {
         </div>
       </div>
     </div>
-
-    <!-- Bottom Nav-->
-    <nav class="bottom-nav">
-      <button class="nav-item" @click="router.push('/')">
-        <span class="nav-icon"><IconHome :size="20" /></span>
-        <span class="nav-label">Home</span>
-      </button>
-      <button class="nav-item" @click="router.push('/monitor')">
-        <span class="nav-icon"><IconTrendUp :size="20" /></span>
-        <span class="nav-label">Monitor</span>
-      </button>
-      <button class="nav-item" @click="router.push('/ai-analysis')">
-        <span class="nav-icon"><IconSmile :size="20" /></span>
-        <span class="nav-label">AI Analysis</span>
-      </button>
-      <button class="nav-item" @click="router.push('/profile')">
-        <span class="nav-icon"><IconUser :size="20" /></span>
-        <span class="nav-label">Profile</span>
-      </button>
-    </nav>
   </div>
 </template>
 
@@ -441,15 +573,11 @@ const handleMouseMove = (e) => {
   height: 100%;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: 110px;
+  padding-bottom: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  cursor: grab;
-  user-select: none;
 }
-.health-report-view.active-drag { cursor: grabbing; }
-.health-report-view::-webkit-scrollbar { display: none; }
 
 /* Header */
 .app-header {
@@ -498,6 +626,21 @@ const handleMouseMove = (e) => {
 .filter-btn.active {
   background: #449284;
   color: white;
+}
+
+/* Chart Labels */
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 8px;
+  margin-top: -8px;
+  margin-bottom: 8px;
+}
+.chart-label {
+  font-size: 10px;
+  color: #888;
+  text-align: center;
+  min-width: 30px;
 }
 
 /* Card Base */
@@ -678,47 +821,4 @@ const handleMouseMove = (e) => {
   border-top: 1px solid #eee;
   padding-top: 12px;
 }
-
-/* Bottom Nav */
-.bottom-nav {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: #ffffff;
-  display: flex;
-  justify-content: space-around;
-  padding: 12px 0 24px 0;
-  border-top: 1px solid #f0eae1;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
-  z-index: 100;
-}
-.nav-item {
-  background: none;
-  border: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  color: #888;
-  cursor: pointer;
-  position: relative;
-  padding: 4px 12px;
-}
-.nav-item::after {
-  content: '';
-  position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 3px;
-  background-color: #5DC6BA;
-  border-radius: 2px;
-  transition: width 0.2s ease;
-}
-.nav-item.active { color: #5DC6BA; }
-.nav-item.active::after { width: 24px; }
-.nav-icon { font-size: 18px; }
-.nav-label { font-size: 10px; font-weight: 500; }
 </style>

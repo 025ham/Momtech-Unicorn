@@ -1,5 +1,5 @@
-// API base URL from environment variable
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// API base URL - use environment variable or fallback to relative path for same-origin
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 async function request(method, path, body) {
   const opts = {

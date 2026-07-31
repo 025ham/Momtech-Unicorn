@@ -4,10 +4,6 @@ import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
 import { useUserStore } from '@/stores/user'
 import IconBack from '@/components/icons/IconBack.vue'
-import IconHome from '@/components/icons/IconHome.vue'
-import IconTrendUp from '@/components/icons/IconTrendUp.vue'
-import IconSmile from '@/components/icons/IconSmile.vue'
-import IconUser from '@/components/icons/IconUser.vue'
 
 const router = useRouter()
 const healthStore = useHealthStore()
@@ -21,58 +17,131 @@ onMounted(async () => {
   ])
 })
 
-const healthScore = computed(() => healthStore.stats?.avg_heart_rate ? 97 : (healthStore.latest?.heart_rate ? Math.round((healthStore.latest.heart_rate / 180) * 100) : '--'))
-const riskLevel = ref('Low')
-const riskLevelColor = ref('#00a86b')
+// Emergency thresholds
+const EMERGENCY_HR = 170
+const EMERGENCY_TEMP = 38.0
+const EMERGENCY_MOVEMENT = 2
+
+// Compute risk level and status based on health data
+const computedRisk = computed(() => {
+  const hr = healthStore.latest?.heart_rate || 0
+  const temp = healthStore.latest?.temperature || 0
+  const movement = healthStore.latest?.baby_movement ?? 10
+
+  // Emergency check
+  if (hr > EMERGENCY_HR || temp > EMERGENCY_TEMP || movement <= EMERGENCY_MOVEMENT) {
+    return { level: 'High', color: '#d9534f' }
+  }
+  // Warning check
+  if (hr > 150 || temp > 37.5 || movement < 5) {
+    return { level: 'Medium', color: '#e26d5c' }
+  }
+  // Normal
+  return { level: 'Low', color: '#00a86b' }
+})
+
+const riskLevel = computed(() => computedRisk.value.level)
+const riskLevelColor = computed(() => computedRisk.value.color)
+
+// Helper to determine status
+const getStatus = (type, value) => {
+  if (type === 'heart_rate') {
+    if (value > EMERGENCY_HR) return 'warning'
+    if (value > 150) return 'warning'
+    return 'stable'
+  }
+  if (type === 'movement') {
+    if (value <= EMERGENCY_MOVEMENT) return 'warning'
+    if (value < 5) return 'warning'
+    return 'normal'
+  }
+  if (type === 'temperature') {
+    if (value > EMERGENCY_TEMP) return 'warning'
+    if (value > 37.5) return 'warning'
+    return 'normal'
+  }
+  if (type === 'stress') {
+    if (value === 'High') return 'warning'
+    if (value === 'Medium') return 'stable'
+    return 'normal'
+  }
+  return 'normal'
+}
 
 const metrics = computed(() => [
-  { name: 'Heart Rate', value: healthStore.latest?.heart_rate ? healthStore.latest.heart_rate + ' bpm' : 'N/A', status: 'stable', prediction: healthStore.latest?.heart_rate > 150 ? 70 : 95 },
-  { name: 'Baby Movement', value: healthStore.latest?.baby_movement != null ? healthStore.latest.baby_movement + ' times' : 'N/A', status: 'normal', prediction: healthStore.latest?.baby_movement >= 10 ? 92 : 60 },
-  { name: 'Temperature', value: healthStore.latest?.temperature ? healthStore.latest.temperature + '°C' : 'N/A', status: 'normal', prediction: 98 },
-  { name: 'Stress Level', value: healthStore.latest?.stress_level || 'N/A', status: 'stable', prediction: 90 },
+  {
+    name: 'Heart Rate',
+    value: healthStore.latest?.heart_rate ? healthStore.latest.heart_rate + ' bpm' : 'N/A',
+    status: getStatus('heart_rate', healthStore.latest?.heart_rate),
+    prediction: healthStore.latest?.heart_rate > EMERGENCY_HR ? 30 : (healthStore.latest?.heart_rate > 150 ? 60 : 95)
+  },
+  {
+    name: 'Baby Movement',
+    value: healthStore.latest?.baby_movement != null ? healthStore.latest.baby_movement + ' times' : 'N/A',
+    status: getStatus('movement', healthStore.latest?.baby_movement),
+    prediction: healthStore.latest?.baby_movement <= EMERGENCY_MOVEMENT ? 20 : (healthStore.latest?.baby_movement < 5 ? 50 : 92)
+  },
+  {
+    name: 'Temperature',
+    value: healthStore.latest?.temperature ? healthStore.latest.temperature + '°C' : 'N/A',
+    status: getStatus('temperature', healthStore.latest?.temperature),
+    prediction: healthStore.latest?.temperature > EMERGENCY_TEMP ? 25 : (healthStore.latest?.temperature > 37.5 ? 65 : 98)
+  },
+  {
+    name: 'Stress Level',
+    value: healthStore.latest?.stress_level || 'N/A',
+    status: getStatus('stress', healthStore.latest?.stress_level),
+    prediction: healthStore.latest?.stress_level === 'High' ? 25 : (healthStore.latest?.stress_level === 'Medium' ? 70 : 90)
+  },
 ])
 
 const aiSummary = computed(() => {
   const week = userStore.user?.pregnancy_week || '-'
-  const movement = healthStore.latest?.baby_movement ?? '-'
-  return [
-    `Heart rate is within normal range for week ${week}`,
-    `Baby movement count is ${movement} movements today`,
-    'No signs of distress detected',
-    'Continue current activity and rest routine',
-  ]
+  const hr = healthStore.latest?.heart_rate || 0
+  const temp = healthStore.latest?.temperature || 0
+  const movement = healthStore.latest?.baby_movement ?? 0
+  const stress = healthStore.latest?.stress_level || 'Normal'
+
+  const summary = []
+
+  // Heart rate summary
+  if (hr > EMERGENCY_HR) {
+    summary.push(`⚠️ Heart rate is dangerously high (${hr} bpm) - Immediate attention needed`)
+  } else if (hr > 150) {
+    summary.push(`Heart rate is elevated (${hr} bpm) - Monitor closely`)
+  } else {
+    summary.push(`Heart rate is within normal range for week ${week}`)
+  }
+
+  // Movement summary
+  if (movement <= EMERGENCY_MOVEMENT) {
+    summary.push(`⚠️ Baby movement is very low (${movement}) - Contact doctor immediately`)
+  } else if (movement < 5) {
+    summary.push(`Baby movement count is low (${movement} movements today)`)
+  } else {
+    summary.push(`Baby movement count is ${movement} movements today`)
+  }
+
+  // Temperature summary
+  if (temp > EMERGENCY_TEMP) {
+    summary.push(`⚠️ Temperature is elevated (${temp}°C) - Possible fever`)
+  } else if (temp > 37.5) {
+    summary.push(`Temperature is slightly elevated (${temp}°C)`)
+  }
+
+  // Stress summary
+  if (stress === 'High') {
+    summary.push(`⚠️ Stress level is HIGH - Please rest and relax`)
+  } else {
+    summary.push('No signs of distress detected')
+  }
+
+  return summary
 })
-
-const scrollContainer = ref(null)
-let isDown = false
-let startY, scrollTop
-
-const handleMouseDown = (e) => {
-  isDown = true
-  scrollContainer.value.classList.add('active-drag')
-  startY = e.pageY - scrollContainer.value.offsetTop
-  scrollTop = scrollContainer.value.scrollTop
-}
-const handleMouseLeave = () => { isDown = false; scrollContainer.value.classList.remove('active-drag') }
-const handleMouseUp = () => { isDown = false; scrollContainer.value.classList.remove('active-drag') }
-const handleMouseMove = (e) => {
-  if (!isDown) return
-  e.preventDefault()
-  const y = e.pageY - scrollContainer.value.offsetTop
-  const walk = (y - startY) * 1.5
-  scrollContainer.value.scrollTop = scrollTop - walk
-}
 </script>
 
 <template>
-  <div
-    class="ai-analysis-view"
-    ref="scrollContainer"
-    @mousedown="handleMouseDown"
-    @mouseleave="handleMouseLeave"
-    @mouseup="handleMouseUp"
-    @mousemove="handleMouseMove"
-  >
+  <div class="ai-analysis-view">
     <!-- Top Nav -->
     <header class="app-header">
       <button class="back-btn" @click="router.push('/')"><IconBack :size="18" /></button>
@@ -126,26 +195,6 @@ const handleMouseMove = (e) => {
         </div>
       </div>
     </section>
-
-    <!-- Bottom Nav-->
-    <nav class="bottom-nav">
-      <button class="nav-item" @click="router.push('/')">
-        <span class="nav-icon"><IconHome :size="20" /></span>
-        <span class="nav-label">Home</span>
-      </button>
-      <button class="nav-item" @click="router.push('/monitor')">
-        <span class="nav-icon"><IconTrendUp :size="20" /></span>
-        <span class="nav-label">Monitor</span>
-      </button>
-      <button class="nav-item active">
-        <span class="nav-icon"><IconSmile :size="20" color="#5DC6BA" /></span>
-        <span class="nav-label">AI Analysis</span>
-      </button>
-      <button class="nav-item" @click="router.push('/profile')">
-        <span class="nav-icon"><IconUser :size="20" /></span>
-        <span class="nav-label">Profile</span>
-      </button>
-    </nav>
   </div>
 </template>
 
@@ -156,15 +205,11 @@ const handleMouseMove = (e) => {
   height: 100%;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: 110px;
+  padding-bottom: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  cursor: grab;
-  user-select: none;
 }
-.ai-analysis-view.active-drag { cursor: grabbing; }
-.ai-analysis-view::-webkit-scrollbar { display: none; }
 
 /* Header */
 .app-header {
@@ -346,47 +391,4 @@ const handleMouseMove = (e) => {
   font-size: 10px;
   color: #888;
 }
-
-/* Bottom Nav */
-.bottom-nav {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: #ffffff;
-  display: flex;
-  justify-content: space-around;
-  padding: 12px 0 24px 0;
-  border-top: 1px solid #f0eae1;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
-  z-index: 100;
-}
-.nav-item {
-  background: none;
-  border: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  color: #888;
-  cursor: pointer;
-  position: relative;
-  padding: 4px 12px;
-}
-.nav-item::after {
-  content: '';
-  position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 3px;
-  background-color: #5DC6BA;
-  border-radius: 2px;
-  transition: width 0.2s ease;
-}
-.nav-item.active { color: #5DC6BA; }
-.nav-item.active::after { width: 24px; }
-.nav-icon { font-size: 18px; }
-.nav-label { font-size: 10px; font-weight: 500; }
 </style>

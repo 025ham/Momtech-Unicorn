@@ -53,6 +53,8 @@ export const useHealthStore = defineStore('health', () => {
         stress_level: 'Normal',
         logged_at: new Date().toISOString(),
       }
+      // Also add initial log
+      logs.value.unshift({ ...latest.value, id: Date.now() })
     }
 
     simInterval = setInterval(() => {
@@ -101,6 +103,13 @@ export const useHealthStore = defineStore('health', () => {
           stress_level: simMovement.value < 6 ? 'Medium' : 'Normal',
           logged_at: new Date().toISOString(),
         }
+      }
+
+      // Add to logs for chart history
+      logs.value.unshift({ ...latest.value, id: Date.now() })
+      // Keep only last 100 logs to prevent memory issues
+      if (logs.value.length > 100) {
+        logs.value = logs.value.slice(0, 100)
       }
     }, 2000)
   }
