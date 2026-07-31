@@ -178,6 +178,18 @@ const addEmergencyDevice = async () => {
     deviceStore.devices.push(newDevice)
     deviceStore.activeDevice = newDevice
 
+    // Show emergency alert immediately
+    showEmergencyAlert.value = true
+
+    // Also update healthStore.latest with emergency values
+    healthStore.latest = {
+      heart_rate: Math.floor(Math.random() * 30) + 170,
+      temperature: parseFloat((37.8 + Math.random() * 1.2).toFixed(1)),
+      baby_movement: Math.floor(Math.random() * 3),
+      stress_level: 'High',
+      logged_at: new Date().toISOString(),
+    }
+
     // Add ABNORMAL health log history
     const now = Date.now()
     for (let i = 0; i < 20; i++) {

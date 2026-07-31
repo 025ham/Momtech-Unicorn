@@ -29,7 +29,14 @@ const doctorContacts = computed(() => {
 })
 
 const openShareModal = async () => {
-  await contactStore.fetchContacts()
+  // Load fallback contacts directly if store is empty
+  if (contactStore.contacts.length === 0) {
+    contactStore.contacts = [
+      { id: 1, name: 'Emergency Services', phone: '1669', contact_type: 'emergency' },
+      { id: 2, name: 'John (Husband)', phone: '081-234-5678', contact_type: 'personal' },
+      { id: 3, name: 'Dr. Maria Chen', phone: '089-123-4567', contact_type: 'doctor' },
+    ]
+  }
   showShareModal.value = true
 }
 
@@ -37,11 +44,15 @@ const shareToDoctor = (doctor) => {
   const logs = healthStore.logs
   const summary = `Health Report - MomLink\nDate: ${new Date().toLocaleDateString()}\n========================\nHeart Rate: ${logs[0]?.heart_rate || '-'} bpm\nTemperature: ${logs[0]?.temperature || '-'}°C\nBaby Movement: ${logs[0]?.baby_movement || '-'} times\nStress Level: ${logs[0]?.stress_level || '-'}\n========================\nPatient: ${userStore.user?.name || 'N/A'}\nHospital: ${userStore.user?.hospital || 'N/A'}`
 
+  // Try native share first, fall back to calling
   if (navigator.share) {
     navigator.share({
       title: 'MomLink Health Report',
       text: summary
-    }).catch(() => {})
+    }).catch(() => {
+      // Fall back to phone call
+      window.location.href = `tel:${doctor.phone}`
+    })
   } else {
     window.location.href = `tel:${doctor.phone}`
   }

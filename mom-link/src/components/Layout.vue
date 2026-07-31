@@ -13,12 +13,17 @@ const isEmergencyPage = computed(() => route.path === '/emergency')
 
 const navItems = [
   { path: '/', name: 'Home', icon: IconHome, iconColor: '#5DC6BA' },
-  { path: '/monitor', name: 'Monitor', icon: IconTrendUp },
-  { path: '/ai-analysis', name: 'AI Analysis', icon: IconSmile },
-  { path: '/profile', name: 'Profile', icon: IconUser },
+  { path: '/monitor', name: 'Monitor', icon: IconTrendUp, iconColor: '#5DC6BA' },
+  { path: '/ai-analysis', name: 'AI', icon: IconSmile, iconColor: '#5DC6BA' },
+  { path: '/profile', name: 'Profile', icon: IconUser, iconColor: '#5DC6BA' },
 ]
 
-const isActive = (path) => route.path === path
+const isActive = (path) => {
+  if (path === '/') {
+    return route.path === '/' || route.path === ''
+  }
+  return route.path.startsWith(path)
+}
 </script>
 
 <template>

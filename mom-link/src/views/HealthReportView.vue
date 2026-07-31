@@ -22,6 +22,22 @@ const userStore = useUserStore()
 onMounted(async () => {
   await healthStore.fetchLogs(100)
   await userStore.fetchUser()
+
+  // Generate mock data if no logs exist (for demo purposes)
+  if (!healthStore.logs || healthStore.logs.length === 0) {
+    const now = Date.now()
+    for (let i = 0; i < 50; i++) {
+      const loggedAt = new Date(now - i * 3600000 * 2).toISOString() // every 2 hours
+      healthStore.logs.push({
+        id: now + i,
+        heart_rate: Math.floor(Math.random() * 30) + 70,  // 70-100 bpm
+        temperature: parseFloat((36.2 + Math.random() * 0.8).toFixed(1)),
+        baby_movement: Math.floor(Math.random() * 12) + 3, // 3-15 times
+        stress_level: ['Low', 'Normal', 'Medium'][Math.floor(Math.random() * 3)],
+        logged_at: loggedAt,
+      })
+    }
+  }
 })
 
 const goBack = () => {
