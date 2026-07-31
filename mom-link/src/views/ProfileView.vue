@@ -41,7 +41,21 @@ onMounted(async () => {
 
   // Fetch in background, but don't wait - show fallback first
   userStore.fetchUser().catch(() => {})
-  // Only fetch devices if we don't have any (avoid clearing on API fail)
+
+  // Load devices from localStorage if missing (for demo persistence)
+  const savedDevices = localStorage.getItem('momlink_demo_devices')
+  if (savedDevices) {
+    try {
+      const parsed = JSON.parse(savedDevices)
+      if (parsed.length > 0) {
+        deviceStore.devices = parsed
+        const activeId = localStorage.getItem('momlink_demo_active')
+        deviceStore.activeDevice = parsed.find(d => d.id == activeId) || parsed[0] || null
+      }
+    } catch (e) {}
+  }
+
+  // Also try API fetch but don't overwrite if we have local data
   if (deviceStore.devices.length === 0) {
     deviceStore.fetchDevices().catch(() => {})
   }
