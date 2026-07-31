@@ -41,7 +41,10 @@ onMounted(async () => {
 
   // Fetch in background, but don't wait - show fallback first
   userStore.fetchUser().catch(() => {})
-  deviceStore.fetchDevices().catch(() => {})
+  // Only fetch devices if we don't have any (avoid clearing on API fail)
+  if (deviceStore.devices.length === 0) {
+    deviceStore.fetchDevices().catch(() => {})
+  }
 })
 
 const startEdit = () => {

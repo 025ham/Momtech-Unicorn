@@ -119,13 +119,27 @@ const selectDevice = async (id) => {
 
     // Check if selected device is emergency device
     const device = deviceStore.devices.find(d => d.id === id)
-    console.log('Selected device:', device)
-    console.log('is_emergency:', device?.is_emergency)
-    console.log('name includes Emergency:', device?.name?.includes('Emergency'))
 
     if (device?.is_emergency || device?.name?.includes('Emergency')) {
-      console.log('Showing emergency alert!')
+      // EMERGENCY DEVICE - set emergency health values
+      healthStore.latest = {
+        heart_rate: Math.floor(Math.random() * 30) + 170,  // 170-200
+        temperature: parseFloat((37.8 + Math.random() * 1.2).toFixed(1)), // 37.8-39
+        baby_movement: Math.floor(Math.random() * 3), // 0-2
+        stress_level: 'High',
+        logged_at: new Date().toISOString(),
+      }
       showEmergencyAlert.value = true
+    } else {
+      // NORMAL DEVICE - set normal health values
+      healthStore.latest = {
+        heart_rate: Math.floor(Math.random() * 20) + 65,  // 65-85
+        temperature: parseFloat((36.2 + Math.random() * 0.8).toFixed(1)),
+        baby_movement: Math.floor(Math.random() * 10) + 5, // 5-15
+        stress_level: ['Low', 'Normal'][Math.floor(Math.random() * 2)],
+        logged_at: new Date().toISOString(),
+      }
+      showEmergencyAlert.value = false
     }
   } catch (err) {
     alert('Failed: ' + err.message)
