@@ -67,14 +67,12 @@ const loadDevicesFromStorage = () => {
   return false
 }
 
-// Initialize demo devices immediately when script loads
-const initDemoDevices = () => {
-  // First try loading from storage
-  if (loadDevicesFromStorage()) {
-    return
-  }
+// Initialize demo devices when component mounts
+onMounted(() => {
+  // Try loading from storage first, then create demo devices if needed
+  loadDevicesFromStorage()
 
-  // If no saved data and no devices, create demo devices
+  // If no devices after loading, create demo devices
   if (deviceStore.devices.length === 0) {
     demoDevices.forEach((demo, idx) => {
       deviceStore.devices.push({
@@ -83,7 +81,7 @@ const initDemoDevices = () => {
         device_type: demo.device_type,
         mac_address: demo.mac_address,
         is_active: idx === 0 ? 1 : 0,
-        is_emergency: false,
+        is_emergency: demo.is_emergency || false,
       })
     })
     if (deviceStore.devices.length > 0) {
@@ -91,13 +89,10 @@ const initDemoDevices = () => {
     }
     saveDevicesToStorage()
   }
-}
 
-// Call init IMMEDIATELY when script runs
-initDemoDevices()
-
-// Fetch user in background
-userStore.fetchUser().catch(() => {})
+  // Fetch user in background
+  userStore.fetchUser().catch(() => {})
+})
 
 const goBack = () => router.push('/profile')
 

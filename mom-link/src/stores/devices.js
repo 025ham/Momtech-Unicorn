@@ -19,9 +19,7 @@ export const useDeviceStore = defineStore('devices', () => {
       activeDevice.value = devices.value.find(d => d.is_active) || devices.value[0] || null
     } catch (err) {
       error.value = err.message
-      // Clear devices on error - don't use mock data
-      devices.value = []
-      activeDevice.value = null
+      // DON'T clear devices on error - keep existing demo devices
     } finally {
       loading.value = false
     }
