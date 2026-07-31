@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHealthStore } from '@/stores/health'
 import { useUserStore } from '@/stores/user'
@@ -55,32 +55,14 @@ onMounted(async () => {
     } catch (e) {}
   }
 
-  // Set health values based on active device type
+  // ALWAYS set health values based on active device type - don't rely on existing values
   if (deviceStore.activeDevice) {
     const isEmergency = deviceStore.activeDevice.is_emergency ||
                        deviceStore.activeDevice.name?.includes('Emergency')
-    if (isEmergency) {
-      // Emergency device - show emergency values
-      healthStore.latest = {
-        heart_rate: Math.floor(Math.random() * 30) + 170,
-        temperature: parseFloat((37.8 + Math.random() * 1.2).toFixed(1)),
-        baby_movement: Math.floor(Math.random() * 3),
-        stress_level: 'High',
-        logged_at: new Date().toISOString(),
-      }
-    } else {
-      // Normal device - show normal values
-      healthStore.latest = {
-        heart_rate: Math.floor(Math.random() * 20) + 65,
-        temperature: parseFloat((36.2 + Math.random() * 0.8).toFixed(1)),
-        baby_movement: Math.floor(Math.random() * 10) + 5,
-        stress_level: ['Low', 'Normal'][Math.floor(Math.random() * 2)],
-        logged_at: new Date().toISOString(),
-      }
-    }
+    startHealthUpdates(isEmergency)
   } else {
-    // No device - start simulation with normal values
-    healthStore.startSimulation()
+    // No device - set normal values and start updates
+    startHealthUpdates(false)
   }
 
   // Fetch data - but don't wait for all to complete
@@ -105,7 +87,66 @@ onMounted(async () => {
   userStore.fetchUser().catch(() => {})
 })
 
-// AI Health Score computed - calculates from ALL metrics
+// Health value state for live updates
+let currentHR = 75
+let currentTemp = 36.6
+let healthInterval = null
+
+const startHealthUpdates = (isEmergency) => {
+  // Clear existing interval
+  if (healthInterval) {
+    clearInterval(healthInterval)
+    healthInterval = null
+  }
+
+  // Set initial values
+  if (isEmergency) {
+    currentHR = 175
+    currentTemp = 38.2
+  } else {
+    currentHR = 75
+    currentTemp = 36.6
+  }
+
+  healthStore.latest = {
+    heart_rate: currentHR,
+    temperature: currentTemp,
+    baby_movement: isEmergency ? 1 : 10,
+    stress_level: isEmergency ? 'High' : 'Normal',
+    logged_at: new Date().toISOString(),
+  }
+
+  // Update every 5 seconds
+  healthInterval = setInterval(() => {
+    if (deviceStore.activeDevice?.is_emergency ||
+        deviceStore.activeDevice?.name?.includes('Emergency')) {
+      // Emergency: HR changes +/- 1, temp changes +/- 0.1
+      currentHR = Math.max(170, Math.min(200, currentHR + (Math.random() > 0.5 ? 1 : -1)))
+      currentTemp = Math.max(37.8, Math.min(39.0, currentTemp + (Math.random() > 0.5 ? 0.1 : -0.1)))
+      currentTemp = parseFloat(currentTemp.toFixed(1))
+    } else {
+      // Normal: HR changes +/- 1, temp changes +/- 0.1
+      currentHR = Math.max(65, Math.min(85, currentHR + (Math.random() > 0.5 ? 1 : -1)))
+      currentTemp = Math.max(36.2, Math.min(37.0, currentTemp + (Math.random() > 0.5 ? 0.1 : -0.1)))
+      currentTemp = parseFloat(currentTemp.toFixed(1))
+    }
+
+    healthStore.latest = {
+      heart_rate: currentHR,
+      temperature: currentTemp,
+      baby_movement: deviceStore.activeDevice?.is_emergency ? 1 : 10,
+      stress_level: deviceStore.activeDevice?.is_emergency ? 'High' : 'Normal',
+      logged_at: new Date().toISOString(),
+    }
+  }, 5000)
+}
+
+onUnmounted(() => {
+  if (healthInterval) {
+    clearInterval(healthInterval)
+    healthInterval = null
+  }
+})
 const healthScore = computed(() => {
   const latest = healthStore.latest
   if (!latest) return '--'

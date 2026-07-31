@@ -24,6 +24,81 @@ const newDevice = ref({ name: '', device_type: '', mac_address: '' })
 const isScanning = ref(false)
 const showEmergencyAlert = ref(false)
 
+// Health value state
+let currentHR = 75
+let currentTemp = 36.6
+let healthInterval = null
+
+// Update health values every few seconds based on device type
+const startHealthUpdates = (isEmergency) => {
+  // Clear existing interval
+  if (healthInterval) {
+    clearInterval(healthInterval)
+    healthInterval = null
+  }
+
+  // Set initial values
+  if (isEmergency) {
+    currentHR = 175
+    currentTemp = 38.2
+    healthStore.latest = {
+      heart_rate: currentHR,
+      temperature: currentTemp,
+      baby_movement: 1,
+      stress_level: 'High',
+      logged_at: new Date().toISOString(),
+    }
+  } else {
+    currentHR = 75
+    currentTemp = 36.6
+    healthStore.latest = {
+      heart_rate: currentHR,
+      temperature: currentTemp,
+      baby_movement: 10,
+      stress_level: 'Normal',
+      logged_at: new Date().toISOString(),
+    }
+  }
+
+  // Update every 5 seconds
+  healthInterval = setInterval(() => {
+    if (isEmergency) {
+      // Emergency: HR changes +/- 1 every 5 sec, temp changes +/- 0.1 every 10 sec
+      currentHR = Math.max(170, Math.min(200, currentHR + (Math.random() > 0.5 ? 1 : -1)))
+      currentTemp = Math.max(37.8, Math.min(39.0, currentTemp + (Math.random() > 0.5 ? 0.1 : -0.1)))
+      currentTemp = parseFloat(currentTemp.toFixed(1))
+
+      healthStore.latest = {
+        heart_rate: currentHR,
+        temperature: currentTemp,
+        baby_movement: 1,
+        stress_level: 'High',
+        logged_at: new Date().toISOString(),
+      }
+    } else {
+      // Normal: HR changes +/- 1 every 5 sec, temp changes +/- 0.1 every 10 sec
+      currentHR = Math.max(65, Math.min(85, currentHR + (Math.random() > 0.5 ? 1 : -1)))
+      currentTemp = Math.max(36.2, Math.min(37.0, currentTemp + (Math.random() > 0.5 ? 0.1 : -0.1)))
+      currentTemp = parseFloat(currentTemp.toFixed(1))
+
+      healthStore.latest = {
+        heart_rate: currentHR,
+        temperature: currentTemp,
+        baby_movement: 10,
+        stress_level: 'Normal',
+        logged_at: new Date().toISOString(),
+      }
+    }
+  }, 5000)
+}
+
+const stopHealthUpdates = () => {
+  if (healthInterval) {
+    clearInterval(healthInterval)
+    healthInterval = null
+  }
+}
+
 // Demo devices list
 const demoDevices = [
   { name: 'Heart Rate Monitor Pro', device_type: 'heart_rate_monitor', mac_address: '00:11:22:33:44:55', is_emergency: false },
@@ -133,24 +208,12 @@ const selectDevice = async (id) => {
     const device = deviceStore.devices.find(d => d.id === id)
 
     if (device?.is_emergency || device?.name?.includes('Emergency')) {
-      // EMERGENCY DEVICE - set emergency health values
-      healthStore.latest = {
-        heart_rate: Math.floor(Math.random() * 30) + 170,  // 170-200
-        temperature: parseFloat((37.8 + Math.random() * 1.2).toFixed(1)), // 37.8-39
-        baby_movement: Math.floor(Math.random() * 3), // 0-2
-        stress_level: 'High',
-        logged_at: new Date().toISOString(),
-      }
+      // EMERGENCY DEVICE - start health updates with emergency values
+      startHealthUpdates(true)
       showEmergencyAlert.value = true
     } else {
-      // NORMAL DEVICE - set normal health values
-      healthStore.latest = {
-        heart_rate: Math.floor(Math.random() * 20) + 65,  // 65-85
-        temperature: parseFloat((36.2 + Math.random() * 0.8).toFixed(1)),
-        baby_movement: Math.floor(Math.random() * 10) + 5, // 5-15
-        stress_level: ['Low', 'Normal'][Math.floor(Math.random() * 2)],
-        logged_at: new Date().toISOString(),
-      }
+      // NORMAL DEVICE - start health updates with normal values
+      startHealthUpdates(false)
       showEmergencyAlert.value = false
     }
   } catch (err) {
