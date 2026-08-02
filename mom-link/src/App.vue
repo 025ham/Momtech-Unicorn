@@ -56,6 +56,8 @@ body {
     max-height: 100vh;
     border-radius: 0;
     box-shadow: none;
+    overflow-x: hidden;
+    overflow-y: auto; /* Allow phone wrapper to scroll */
   }
 }
 </style>

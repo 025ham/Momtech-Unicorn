@@ -14,7 +14,7 @@ export const useHealthStore = defineStore('health', () => {
   // Real-time simulation state - shared across all views
   const isSimulating = ref(false)
   let simInterval = null
-  const simHeartRate = ref(140)
+  const simHeartRate = ref(140) // Start at 140 (middle of 120-160)
   const simMovement = ref(8)
   const simTemperature = ref(36.5)
 
@@ -64,7 +64,8 @@ export const useHealthStore = defineStore('health', () => {
 
       if (isEmergency) {
         // Emergency device: all values are abnormally high
-        const hrChange = Math.floor(Math.random() * 20) - 5 // -5 to +14
+        // Change +/- 1 every 2 seconds, starting at 175
+        const hrChange = Math.floor(Math.random() * 3) - 1 // -1, 0, or +1
         simHeartRate.value = Math.max(170, Math.min(200, simHeartRate.value + hrChange))
 
         if (Math.random() < 0.3) {
@@ -84,8 +85,8 @@ export const useHealthStore = defineStore('health', () => {
           logged_at: new Date().toISOString(),
         }
       } else {
-        // Normal device: realistic values
-        const hrChange = Math.floor(Math.random() * 10) - 5 // -5 to +4
+        // Normal device: realistic values - HR range 120-160, change +/- 1 every 2 seconds
+        const hrChange = Math.floor(Math.random() * 3) - 1 // -1, 0, or +1
         simHeartRate.value = Math.max(120, Math.min(160, simHeartRate.value + hrChange))
 
         // Baby movement and temperature change less frequently (every ~10 seconds)

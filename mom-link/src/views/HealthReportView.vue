@@ -77,6 +77,11 @@ const filters = [
   { key: 'month', label: 'Month' }
 ]
 
+// Date/Week selectors
+const selectedDate = ref(new Date().toISOString().split('T')[0]) // Today for Day view
+const selectedWeek = ref('this') // 'this', 'last', or 1-4 for Month
+const selectedMonth = ref(new Date().toISOString().slice(0, 7)) // Current month YYYY-MM
+
 const setFilter = (filter) => {
   activeFilter.value = filter
 }
@@ -90,17 +95,63 @@ const filteredLogs = computed(() => {
   let cutoffDate = new Date()
 
   if (activeFilter.value === 'day') {
-    // Today only - show by hour
+    // Specific date selected
+    cutoffDate = new Date(selectedDate.value)
     cutoffDate.setHours(0, 0, 0, 0)
+    const nextDay = new Date(cutoffDate)
+    nextDay.setDate(nextDay.getDate() + 1)
+    return logs.filter(l => {
+      const d = new Date(l.logged_at)
+      return d >= cutoffDate && d < nextDay
+    })
   } else if (activeFilter.value === 'week') {
-    // Last 7 days - show by day
-    cutoffDate.setDate(now.getDate() - 7)
-  } else if (activeFilter.value === 'month') {
-    // Last 30 days - show by week
-    cutoffDate.setDate(now.getDate() - 30)
-  }
+    // This week or last week
+    const dayOfWeek = now.getDay()
+    const startOfWeek = new Date(now)
+    startOfWeek.setDate(now.getDate() - dayOfWeek)
+    startOfWeek.setHours(0, 0, 0, 0)
 
-  return logs.filter(l => new Date(l.logged_at) >= cutoffDate)
+    if (selectedWeek.value === 'last') {
+      startOfWeek.setDate(startOfWeek.getDate() - 7)
+    }
+    // 'this' week is default, uses startOfWeek as-is
+
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 7)
+
+    return logs.filter(l => {
+      const d = new Date(l.logged_at)
+      return d >= startOfWeek && d < endOfWeek
+    })
+  } else {
+    // Month view - filter by week number within month
+    const [year, month] = selectedMonth.value.split('-').map(Number)
+    const weekNum = selectedWeek.value === 'this' ? Math.ceil(now.getDate() / 7) :
+                    selectedWeek.value === 'last' ? -1 : parseInt(selectedWeek.value)
+
+    if (weekNum === -1) {
+      // Last week of previous month
+      const lastDayOfPrevMonth = new Date(year, month - 1, 0)
+      const startOfLastWeek = new Date(year, month - 2, lastDayOfPrevMonth.getDate() - 6)
+      const endOfLastWeek = new Date(year, month - 1, lastDayOfPrevMonth.getDate() + 1)
+      return logs.filter(l => {
+        const d = new Date(l.logged_at)
+        return d >= startOfLastWeek && d < endOfLastWeek
+      })
+    }
+
+    // Specific week 1-4 of selected month
+    const startOfMonth = new Date(year, month - 1, 1)
+    const firstDayWeek = Math.ceil(startOfMonth.getDate() / 7)
+
+    const startOfWeek = new Date(year, month - 1, (weekNum - 1) * 7 + 1)
+    const endOfWeek = new Date(year, month - 1, weekNum * 7 + 1)
+
+    return logs.filter(l => {
+      const d = new Date(l.logged_at)
+      return d >= startOfWeek && d < endOfWeek
+    })
+  }
 })
 
 // Group data by time period for chart labels
@@ -136,18 +187,11 @@ const chartLabels = computed(() => {
       return { label: dayNames[parseInt(d)], value: avgHR }
     })
   } else {
-    // Group by week for month view - show week number
-    const weeks = {}
-    logs.forEach(l => {
-      const d = new Date(l.logged_at)
-      const weekNum = Math.ceil((d.getDate()) / 7)
-      if (!weeks[weekNum]) weeks[weekNum] = []
-      weeks[weekNum].push(l)
-    })
-    return Object.keys(weeks).sort((a, b) => a - b).map(w => {
-      const avgHR = Math.round(weeks[w].reduce((sum, l) => sum + (l.heart_rate || 0), 0) / weeks[w].length)
-      return { label: `Week ${w}`, value: avgHR }
-    })
+    // Month view - show selected week label
+    const weekLabel = selectedWeek.value === 'this' ? 'This Week' :
+                      selectedWeek.value === 'last' ? 'Last Week' :
+                      `Week ${selectedWeek.value}`
+    return [{ label: weekLabel, value: 0 }]
   }
 })
 
@@ -509,6 +553,52 @@ const downloadPDF = () => {
       </button>
     </section>
 
+    <!-- Date/Week Selector -->
+    <section class="selector-section">
+      <!-- Day selector -->
+      <div v-if="activeFilter === 'day'" class="selector-row">
+        <input type="date" v-model="selectedDate" class="date-input" />
+      </div>
+
+      <!-- Week selector -->
+      <div v-if="activeFilter === 'week'" class="selector-row">
+        <button
+          class="selector-btn"
+          :class="{ active: selectedWeek === 'this' }"
+          @click="selectedWeek = 'this'"
+        >This Week</button>
+        <button
+          class="selector-btn"
+          :class="{ active: selectedWeek === 'last' }"
+          @click="selectedWeek = 'last'"
+        >Last Week</button>
+      </div>
+
+      <!-- Month selector -->
+      <div v-if="activeFilter === 'month'" class="selector-row month-selector">
+        <input type="month" v-model="selectedMonth" class="month-input" />
+        <div class="week-buttons">
+          <button
+            v-for="w in [1,2,3,4]"
+            :key="w"
+            class="week-btn"
+            :class="{ active: selectedWeek === w }"
+            @click="selectedWeek = w"
+          >W{{ w }}</button>
+          <button
+            class="week-btn"
+            :class="{ active: selectedWeek === 'this' }"
+            @click="selectedWeek = 'this'"
+          >This</button>
+          <button
+            class="week-btn"
+            :class="{ active: selectedWeek === 'last' }"
+            @click="selectedWeek = 'last'"
+          >Last</button>
+        </div>
+      </div>
+    </section>
+
     <!-- X-Axis Labels -->
     <div class="chart-labels">
       <span v-for="(label, idx) in chartLabels" :key="idx" class="chart-label">{{ label.label }}</span>
@@ -684,7 +774,7 @@ const downloadPDF = () => {
 .health-report-view {
   background-color: #fcf8f2;
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
   overflow-y: auto;
   padding: 16px;
   padding-bottom: 24px;
@@ -740,6 +830,64 @@ const downloadPDF = () => {
 .filter-btn.active {
   background: #449284;
   color: white;
+}
+
+/* Selector Section */
+.selector-section {
+  margin-top: -8px;
+}
+.selector-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.selector-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+}
+.selector-btn.active {
+  background: #449284;
+  color: white;
+  border-color: #449284;
+}
+.date-input, .month-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 13px;
+  background: white;
+  color: #333;
+}
+.month-selector {
+  flex-direction: column;
+}
+.week-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.week-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+}
+.week-btn.active {
+  background: #2b5c8f;
+  color: white;
+  border-color: #2b5c8f;
 }
 
 /* Chart Labels */

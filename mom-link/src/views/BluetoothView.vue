@@ -25,7 +25,7 @@ const isScanning = ref(false)
 const showEmergencyAlert = ref(false)
 
 // Health value state
-let currentHR = 75
+let currentHR = 140
 let currentTemp = 36.6
 let healthInterval = null
 
@@ -78,7 +78,7 @@ const startHealthUpdates = (isEmergency) => {
       }
     } else {
       // Normal: HR 120-160 changes +/- 1, temp changes +/- 0.1
-      currentHR = Math.max(120, Math.min(160, currentHR + (Math.random() > 0.5 ? 1 : -1)))
+      currentHR = Math.max(120, Math.min(160, currentHR + (Math.floor(Math.random() * 3) - 1)))
       currentTemp = Math.max(36.2, Math.min(37.0, currentTemp + (Math.random() > 0.5 ? 0.1 : -0.1)))
       currentTemp = parseFloat(currentTemp.toFixed(1))
 

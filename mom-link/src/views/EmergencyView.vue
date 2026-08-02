@@ -209,7 +209,8 @@ const handleMouseMove = (e) => {
 .emergency-view {
   background-color: #fcf8f2;
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
+  height: auto;
   overflow-y: auto;
   padding: 16px;
   padding-bottom: 110px;
