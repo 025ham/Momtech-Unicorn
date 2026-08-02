@@ -23,46 +23,41 @@ onMounted(async () => {
   // Fetch user first
   await userStore.fetchUser()
 
-  // Fetch logs - generate mock data if empty
-  await healthStore.fetchLogs(100)
+  // Always generate mock data for demo - cover 60 days for multi-month support
+  const now = new Date()
+  const mockLogs = []
 
-  // Generate mock data if no logs exist (for demo purposes)
-  // Data spans 30 days with proper distribution for day/week/month views
-  if (!healthStore.logs || healthStore.logs.length === 0) {
-    const now = Date.now()
-    const mockLogs = []
+  // Generate data for 60 days, multiple entries per day
+  for (let day = 0; day < 60; day++) {
+    for (let hour = 0; hour < 24; hour += 2) { // Every 2 hours
+      const loggedAt = new Date(now)
+      loggedAt.setDate(loggedAt.getDate() - day)
+      loggedAt.setHours(hour, 0, 0, 0)
 
-    // Generate 30 days of data, more dense for recent days
-    for (let i = 0; i < 100; i++) {
-      const daysAgo = i / 3.3  // ~30 days spread
-      const loggedAt = new Date(now - daysAgo * 24 * 3600000).toISOString()
-
-      // Create realistic patterns
-      // Heart rate varies by time of day and pregnancy stress
-      const baseHR = 72 + Math.sin(i * 0.3) * 8
-      const hr = Math.floor(baseHR + Math.random() * 10 - 5)
+      // Heart rate varies by time of day (higher during day)
+      const baseHR = 72 + (hour >= 8 && hour <= 20 ? 10 : 0) + Math.floor(Math.random() * 10)
+      const hr = Math.floor(baseHR)
 
       // Temperature stays fairly stable
       const temp = parseFloat((36.4 + Math.random() * 0.6).toFixed(1))
 
-      // Baby movement - more active in recent days
-      const recentBonus = Math.max(0, 5 - daysAgo * 0.3)
-      const movement = Math.floor(Math.random() * 8 + 4 + recentBonus)
+      // Baby movement - varies by time
+      const movement = Math.floor(Math.random() * 8 + 4)
 
       const stressOptions = ['Low', 'Normal', 'Medium', 'Normal', 'Low']
       const stress = stressOptions[Math.floor(Math.random() * stressOptions.length)]
 
       mockLogs.push({
-        id: now + i,
+        id: now.getTime() + day * 100 + hour,
         heart_rate: hr,
         temperature: temp,
         baby_movement: Math.max(2, movement),
         stress_level: stress,
-        logged_at: loggedAt,
+        logged_at: loggedAt.toISOString(), // Use ISO format for consistency
       })
     }
-    healthStore.logs = mockLogs
   }
+  healthStore.logs = mockLogs
 })
 
 const goBack = () => {
@@ -77,6 +72,14 @@ const filters = [
   { key: 'month', label: 'Month' }
 ]
 
+// Date/Week selectors
+const selectedDate = ref(new Date().toLocaleDateString('en-CA')) // Today for Day view (local time)
+const selectedWeek = ref(1) // Default to week 1
+const selectedMonth = ref(new Date().toLocaleDateString('en-CA').slice(0, 7)) // Current month YYYY-MM in local time
+const todayStr = new Date().toLocaleDateString('en-CA') // Today in local time
+const currentMonthStr = new Date().toLocaleDateString('en-CA').slice(0, 7) // Current month in local time
+const selectedWeekDay = ref(new Date().getDay()) // 0=Sun,1=Mon,...6=Sat - default to today
+
 const setFilter = (filter) => {
   activeFilter.value = filter
 }
@@ -90,17 +93,57 @@ const filteredLogs = computed(() => {
   let cutoffDate = new Date()
 
   if (activeFilter.value === 'day') {
-    // Today only - show by hour
+    // Specific date selected
+    cutoffDate = new Date(selectedDate.value)
     cutoffDate.setHours(0, 0, 0, 0)
+    const nextDay = new Date(cutoffDate)
+    nextDay.setDate(nextDay.getDate() + 1)
+    return logs.filter(l => {
+      const d = new Date(l.logged_at)
+      return d >= cutoffDate && d < nextDay
+    })
   } else if (activeFilter.value === 'week') {
-    // Last 7 days - show by day
-    cutoffDate.setDate(now.getDate() - 7)
-  } else if (activeFilter.value === 'month') {
-    // Last 30 days - show by week
-    cutoffDate.setDate(now.getDate() - 30)
-  }
+    // Week view - select day of week (0=Sun, 1=Mon, ... 6=Sat)
+    // Show last 7 occurrences of that day
+    const targetDay = selectedWeekDay.value
+    const now = new Date()
+    const result = []
 
-  return logs.filter(l => new Date(l.logged_at) >= cutoffDate)
+    // Find the most recent 7 occurrences of the target day
+    for (let i = 0; i < 30; i++) {
+      const checkDate = new Date(now)
+      checkDate.setDate(checkDate.getDate() - i)
+      if (checkDate.getDay() === targetDay) {
+        const dayStart = new Date(checkDate)
+        dayStart.setHours(0, 0, 0, 0)
+        const dayEnd = new Date(dayStart)
+        dayEnd.setDate(dayEnd.getDate() + 1)
+        const dayLogs = logs.filter(l => {
+          const d = new Date(l.logged_at)
+          return d >= dayStart && d < dayEnd
+        })
+        if (dayLogs.length > 0) {
+          result.push(...dayLogs)
+          if (result.length >= 7) break
+        }
+      }
+    }
+    return result
+  } else {
+    // Month view - return data for ALL weeks (W1-W4) combined
+    const [year, month] = selectedMonth.value.split('-').map(Number)
+    const allLogs = []
+    for (let w = 1; w <= 4; w++) {
+      const startOfWeek = new Date(year, month - 1, (w - 1) * 7 + 1, 0, 0, 0, 0).getTime()
+      const endOfWeek = new Date(year, month - 1, w * 7 + 1, 0, 0, 0, 0).getTime()
+      const weekLogs = logs.filter(l => {
+        const d = new Date(l.logged_at).getTime()
+        return d >= startOfWeek && d < endOfWeek
+      })
+      allLogs.push(...weekLogs)
+    }
+    return allLogs
+  }
 })
 
 // Group data by time period for chart labels
@@ -122,32 +165,27 @@ const chartLabels = computed(() => {
       return { label: `${h}:00`, value: avgHR }
     })
   } else if (activeFilter.value === 'week') {
-    // Group by day for week view - show day name
-    const days = {}
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    // Week view - show last 7 occurrences of selected day, grouped by hour
+    const logs = filteredLogs.value
+    const hours = {}
     logs.forEach(l => {
       const d = new Date(l.logged_at)
-      const day = d.getDay()
-      if (!days[day]) days[day] = []
-      days[day].push(l)
+      const hour = d.getHours()
+      if (!hours[hour]) hours[hour] = []
+      hours[hour].push(l)
     })
-    return Object.keys(days).sort((a, b) => a - b).map(d => {
-      const avgHR = Math.round(days[d].reduce((sum, l) => sum + (l.heart_rate || 0), 0) / days[d].length)
-      return { label: dayNames[parseInt(d)], value: avgHR }
+    return Object.keys(hours).sort((a, b) => a - b).map(h => {
+      const avgHR = Math.round(hours[h].reduce((sum, l) => sum + (l.heart_rate || 0), 0) / hours[h].length)
+      return { label: `${h}:00`, value: avgHR }
     })
   } else {
-    // Group by week for month view - show week number
-    const weeks = {}
-    logs.forEach(l => {
-      const d = new Date(l.logged_at)
-      const weekNum = Math.ceil((d.getDate()) / 7)
-      if (!weeks[weekNum]) weeks[weekNum] = []
-      weeks[weekNum].push(l)
-    })
-    return Object.keys(weeks).sort((a, b) => a - b).map(w => {
-      const avgHR = Math.round(weeks[w].reduce((sum, l) => sum + (l.heart_rate || 0), 0) / weeks[w].length)
-      return { label: `Week ${w}`, value: avgHR }
-    })
+    // Month view - show all 4 weeks
+    return [
+      { label: 'W1', value: 0 },
+      { label: 'W2', value: 0 },
+      { label: 'W3', value: 0 },
+      { label: 'W4', value: 0 }
+    ]
   }
 })
 
@@ -169,29 +207,25 @@ const heartRateData = computed(() => {
       return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
     })
   } else if (activeFilter.value === 'week') {
-    const days = {}
+    // Week view - show last 7 occurrences of selected day, grouped by hour
+    const logs = filteredLogs.value
+    const hours = {}
     logs.forEach(l => {
       const d = new Date(l.logged_at)
-      const day = d.getDay()
-      if (!days[day]) days[day] = []
-      days[day].push(l.heart_rate)
+      const hour = d.getHours()
+      if (!hours[hour]) hours[hour] = []
+      hours[hour].push(l.heart_rate)
     })
-    return Object.keys(days).sort((a, b) => a - b).map(d => {
-      const vals = days[d].filter(Boolean)
+    return Object.keys(hours).sort((a, b) => a - b).map(h => {
+      const vals = hours[h].filter(Boolean)
       return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
     })
   } else {
-    const weeks = {}
-    logs.forEach(l => {
-      const d = new Date(l.logged_at)
-      const weekNum = Math.ceil(d.getDate() / 7)
-      if (!weeks[weekNum]) weeks[weekNum] = []
-      weeks[weekNum].push(l.heart_rate)
-    })
-    return Object.keys(weeks).sort((a, b) => a - b).map(w => {
-      const vals = weeks[w].filter(Boolean)
-      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
-    })
+    // Month view - use first 4 data points from filteredLogs as sample
+    const data = filteredLogs.value.slice(0, 4).map(l => l.heart_rate)
+    // Fill with defaults if not enough data
+    while (data.length < 4) data.push(null)
+    return data
   }
 })
 
@@ -212,29 +246,23 @@ const movementData = computed(() => {
       return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
     })
   } else if (activeFilter.value === 'week') {
-    const days = {}
+    // Week view - show last 7 occurrences of selected day, grouped by hour
+    const hours = {}
     logs.forEach(l => {
       const d = new Date(l.logged_at)
-      const day = d.getDay()
-      if (!days[day]) days[day] = []
-      days[day].push(l.baby_movement)
+      const hour = d.getHours()
+      if (!hours[hour]) hours[hour] = []
+      hours[hour].push(l.baby_movement)
     })
-    return Object.keys(days).sort((a, b) => a - b).map(d => {
-      const vals = days[d].filter(v => v != null)
+    return Object.keys(hours).sort((a, b) => a - b).map(h => {
+      const vals = hours[h].filter(v => v != null)
       return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
     })
   } else {
-    const weeks = {}
-    logs.forEach(l => {
-      const d = new Date(l.logged_at)
-      const weekNum = Math.ceil(d.getDate() / 7)
-      if (!weeks[weekNum]) weeks[weekNum] = []
-      weeks[weekNum].push(l.baby_movement)
-    })
-    return Object.keys(weeks).sort((a, b) => a - b).map(w => {
-      const vals = weeks[w].filter(v => v != null)
-      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
-    })
+    // Month view - use first 4 data points from filteredLogs as sample
+    const data = filteredLogs.value.slice(0, 4).map(l => l.baby_movement)
+    while (data.length < 4) data.push(null)
+    return data
   }
 })
 
@@ -255,29 +283,23 @@ const temperatureData = computed(() => {
       return vals.length ? parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : null
     })
   } else if (activeFilter.value === 'week') {
-    const days = {}
+    // Week view - show last 7 occurrences of selected day, grouped by hour
+    const hours = {}
     logs.forEach(l => {
       const d = new Date(l.logged_at)
-      const day = d.getDay()
-      if (!days[day]) days[day] = []
-      days[day].push(l.temperature)
+      const hour = d.getHours()
+      if (!hours[hour]) hours[hour] = []
+      hours[hour].push(l.temperature)
     })
-    return Object.keys(days).sort((a, b) => a - b).map(d => {
-      const vals = days[d].filter(Boolean)
+    return Object.keys(hours).sort((a, b) => a - b).map(h => {
+      const vals = hours[h].filter(Boolean)
       return vals.length ? parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : null
     })
   } else {
-    const weeks = {}
-    logs.forEach(l => {
-      const d = new Date(l.logged_at)
-      const weekNum = Math.ceil(d.getDate() / 7)
-      if (!weeks[weekNum]) weeks[weekNum] = []
-      weeks[weekNum].push(l.temperature)
-    })
-    return Object.keys(weeks).sort((a, b) => a - b).map(w => {
-      const vals = weeks[w].filter(Boolean)
-      return vals.length ? parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)) : null
-    })
+    // Month view - use first 4 data points from filteredLogs as sample
+    const data = filteredLogs.value.slice(0, 4).map(l => l.temperature)
+    while (data.length < 4) data.push(null)
+    return data
   }
 })
 
@@ -509,6 +531,39 @@ const downloadPDF = () => {
       </button>
     </section>
 
+    <!-- Date/Week Selector -->
+    <section class="selector-section">
+      <!-- Day selector - allow future dates -->
+      <div v-if="activeFilter === 'day'" class="selector-row">
+        <input type="date" v-model="selectedDate" class="date-input" :max="todayStr" />
+      </div>
+
+      <!-- Week selector - select day of week -->
+      <div v-if="activeFilter === 'week'" class="selector-row">
+        <button
+          v-for="(day, idx) in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']"
+          :key="idx"
+          class="day-btn"
+          :class="{ active: selectedWeekDay === idx }"
+          @click="selectedWeekDay = idx"
+        >{{ day }}</button>
+      </div>
+
+      <!-- Month selector - select month then week 1-4 -->
+      <div v-if="activeFilter === 'month'" class="selector-row month-selector">
+        <input type="month" v-model="selectedMonth" class="month-input" :max="currentMonthStr" />
+        <div class="week-buttons">
+          <button
+            v-for="w in [1,2,3,4]"
+            :key="w"
+            class="week-btn"
+            :class="{ active: selectedWeek === w }"
+            @click="selectedWeek = w"
+          >W{{ w }}</button>
+        </div>
+      </div>
+    </section>
+
     <!-- X-Axis Labels -->
     <div class="chart-labels">
       <span v-for="(label, idx) in chartLabels" :key="idx" class="chart-label">{{ label.label }}</span>
@@ -684,7 +739,7 @@ const downloadPDF = () => {
 .health-report-view {
   background-color: #fcf8f2;
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
   overflow-y: auto;
   padding: 16px;
   padding-bottom: 24px;
@@ -740,6 +795,85 @@ const downloadPDF = () => {
 .filter-btn.active {
   background: #449284;
   color: white;
+}
+
+/* Selector Section */
+.selector-section {
+  margin-top: -8px;
+}
+.selector-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.selector-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+}
+.selector-btn.active {
+  background: #449284;
+  color: white;
+  border-color: #449284;
+}
+.date-input, .month-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 13px;
+  background: white;
+  color: #333;
+}
+.month-selector {
+  flex-direction: column;
+}
+.week-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.week-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+}
+.week-btn.active {
+  background: #2b5c8f;
+  color: white;
+  border-color: #2b5c8f;
+}
+.day-btn {
+  flex: 1;
+  padding: 8px 4px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+}
+.day-btn.active {
+  background: #449284;
+  color: white;
+  border-color: #449284;
+}
+.week-hint {
+  font-size: 12px;
+  color: #888;
+  padding: 8px;
 }
 
 /* Chart Labels */
