@@ -65,7 +65,7 @@ const startHealthUpdates = (isEmergency) => {
   healthInterval = setInterval(() => {
     if (isEmergency) {
       // Emergency: HR changes +/- 1 every 5 sec, temp changes +/- 0.1 every 10 sec
-      currentHR = Math.max(170, Math.min(200, currentHR + (Math.random() > 0.5 ? 1 : -1)))
+      currentHR = Math.max(170, Math.min(200, currentHR + (Math.floor(Math.random() * 3) - 1)))
       currentTemp = Math.max(37.8, Math.min(39.0, currentTemp + (Math.random() > 0.5 ? 0.1 : -0.1)))
       currentTemp = parseFloat(currentTemp.toFixed(1))
 

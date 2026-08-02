@@ -39,8 +39,10 @@ body {
   border-radius: 40px;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
 }
 
+/* Mobile: fill entire screen, no radius or shadow */
 @media (max-width: 430px) {
   html, body {
     background-color: #fcf8f2;
@@ -52,12 +54,13 @@ body {
 
   .phone-wrapper {
     width: 100%;
-    min-height: 100vh;
     max-height: 100vh;
+    max-height: 100dvh; /* Dynamic viewport height for mobile browsers */
     border-radius: 0;
     box-shadow: none;
     overflow-x: hidden;
-    overflow-y: auto; /* Allow phone wrapper to scroll */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 </style>
