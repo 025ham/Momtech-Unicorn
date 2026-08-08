@@ -23,44 +23,17 @@ html, body {
 }
 
 body {
-  display: flex;
-  justify-content: center;
+  margin: 0;
 }
 
 .phone-wrapper {
-  width: 430px;
+  width: 100%;
+  max-width: 600px;
   min-height: 100vh;
-  max-height: 100vh;
+  height: 100vh;
+  margin: 0 auto;
   background-color: #fcf8f2;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
   position: relative;
-  border-radius: 40px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
-}
-
-/* Mobile: fill entire screen, no radius or shadow */
-@media (max-width: 430px) {
-  html, body {
-    background-color: #fcf8f2;
-  }
-
-  body {
-    justify-content: flex-start;
-  }
-
-  .phone-wrapper {
-    width: 100%;
-    max-height: 100vh;
-    max-height: 100dvh; /* Dynamic viewport height for mobile browsers */
-    border-radius: 0;
-    box-shadow: none;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+  overflow: hidden;
 }
 </style>

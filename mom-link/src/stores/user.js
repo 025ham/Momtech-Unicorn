@@ -42,9 +42,13 @@ export const useUserStore = defineStore('user', () => {
     try {
       await api.updateUser(user.value.id, data)
       user.value = { ...user.value, ...data }
+      // Save to localStorage for persistence
+      localStorage.setItem('momlink_demo_user', JSON.stringify(user.value))
     } catch (err) {
       error.value = err.message
-      throw err
+      // Fallback: save locally
+      user.value = { ...user.value, ...data }
+      localStorage.setItem('momlink_demo_user', JSON.stringify(user.value))
     } finally {
       loading.value = false
     }

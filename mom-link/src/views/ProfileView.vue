@@ -78,12 +78,8 @@ const cancelEdit = () => {
 }
 
 const saveProfile = async () => {
-  try {
-    await userStore.updateProfile(editForm.value)
-    isEditing.value = false
-  } catch (err) {
-    alert('Failed to save: ' + err.message)
-  }
+  await userStore.updateProfile(editForm.value)
+  isEditing.value = false
 }
 
 const exportData = async () => {
