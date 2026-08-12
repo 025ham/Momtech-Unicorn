@@ -1,22 +1,28 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import IconHome from '@/components/icons/IconHome.vue'
 import IconTrendUp from '@/components/icons/IconTrendUp.vue'
 import IconSmile from '@/components/icons/IconSmile.vue'
 import IconUser from '@/components/icons/IconUser.vue'
 import IconLock from '@/components/icons/IconLock.vue'
+import { usePremium } from '@/composables/usePremium'
 
 const route = useRoute()
 const router = useRouter()
 
-const isEmergencyPage = computed(() => route.path === '/emergency')
+// Use shared premium state
+const {
+  isPremiumActive,
+  showPremiumModal,
+  showSnackbar,
+  snackbarMessage,
+  activatePremium,
+  closePremiumModal,
+  openPremiumModal,
+} = usePremium()
 
-// Premium state
-const isPremiumActive = ref(localStorage.getItem('momlink_premium_active') === 'true')
-const showPremiumModal = ref(false)
-const showSnackbar = ref(false)
-const snackbarMessage = ref('')
+const isEmergencyPage = computed(() => route.path === '/emergency')
 
 const navItems = [
   { path: '/home', name: 'Home', icon: IconHome, iconColor: '#5DC6BA' },
@@ -31,25 +37,10 @@ const isActive = (path) => {
 
 const handleNavClick = (item) => {
   if (item.isPremium && !isPremiumActive.value) {
-    showPremiumModal.value = true
+    openPremiumModal()
   } else {
     router.push(item.path)
   }
-}
-
-const activatePremium = () => {
-  isPremiumActive.value = true
-  localStorage.setItem('momlink_premium_active', 'true')
-  showPremiumModal.value = false
-  snackbarMessage.value = 'Activated successful'
-  showSnackbar.value = true
-  setTimeout(() => {
-    showSnackbar.value = false
-  }, 3000)
-}
-
-const cancelPremium = () => {
-  showPremiumModal.value = false
 }
 </script>
 
@@ -78,7 +69,7 @@ const cancelPremium = () => {
     </nav>
 
     <!-- Premium Modal -->
-    <div v-if="showPremiumModal" class="premium-modal-overlay" @click="cancelPremium">
+    <div v-if="showPremiumModal" class="premium-modal-overlay" @click="closePremiumModal">
       <div class="premium-modal" @click.stop>
         <div class="modal-header">
           <h3>Activated Premium</h3>
@@ -92,7 +83,7 @@ const cancelPremium = () => {
             <li>✨ Priority support</li>
           </ul>
           <div class="modal-actions">
-            <button class="btn-cancel" @click="cancelPremium">Cancel</button>
+            <button class="btn-cancel" @click="closePremiumModal">Cancel</button>
             <button class="btn-purchase" @click="activatePremium">Purchase</button>
           </div>
         </div>
@@ -121,7 +112,7 @@ const cancelPremium = () => {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
 }
 
 .layout-content::-webkit-scrollbar {
@@ -138,7 +129,7 @@ const cancelPremium = () => {
   background-color: #ffffff;
   display: flex;
   justify-content: space-around;
-  padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)) 0;
+  padding: 16px 0 calc(16px + env(safe-area-inset-bottom, 0px)) 0;
   border-top: 1px solid #f0eae1;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
   z-index: 100;
@@ -150,11 +141,11 @@ const cancelPremium = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 10px;
   color: #888;
   cursor: pointer;
   position: relative;
-  padding: 4px 12px;
+  padding: 6px 12px;
   transition: all 0.2s;
 }
 

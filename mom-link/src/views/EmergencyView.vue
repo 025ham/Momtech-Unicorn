@@ -15,11 +15,24 @@ import IconHome from '@/components/icons/IconHome.vue'
 import IconTrendUp from '@/components/icons/IconTrendUp.vue'
 import IconSmile from '@/components/icons/IconSmile.vue'
 import IconUser from '@/components/icons/IconUser.vue'
+import IconLock from '@/components/icons/IconLock.vue'
+import { usePremium } from '@/composables/usePremium'
 
 const router = useRouter()
 const contactStore = useContactStore()
 const userStore = useUserStore()
 const notificationStore = useNotificationStore()
+
+// Use shared premium state
+const {
+  isPremiumActive,
+  showPremiumModal,
+  showSnackbar,
+  snackbarMessage,
+  activatePremium,
+  closePremiumModal,
+  openPremiumModal,
+} = usePremium()
 
 const goBack = () => router.push('/home')
 
@@ -61,6 +74,15 @@ const callNumber = (number) => {
 const callHospital = () => {
   const hospitalPhone = '1669'
   window.location.href = `tel:${hospitalPhone}`
+}
+
+// Premium handlers
+const handleAIPremiumClick = () => {
+  if (!isPremiumActive.value) {
+    openPremiumModal()
+  } else {
+    router.push('/home/ai-analysis')
+  }
 }
 
 const scrollContainer = ref(null)
@@ -189,19 +211,51 @@ const handleMouseMove = (e) => {
         <span class="nav-icon"><IconHome :size="20" /></span>
         <span class="nav-label">Home</span>
       </button>
-      <button class="nav-item" @click="router.push('/monitor')">
+      <button class="nav-item" @click="router.push('/home/monitor')">
         <span class="nav-icon"><IconTrendUp :size="20" /></span>
         <span class="nav-label">Monitor</span>
       </button>
-      <button class="nav-item" @click="router.push('/ai-analysis')">
-        <span class="nav-icon"><IconSmile :size="20" /></span>
+      <button class="nav-item" :class="{ 'is-premium': !isPremiumActive }" @click="handleAIPremiumClick">
+        <span class="nav-icon">
+          <IconSmile :size="20" />
+          <span v-if="!isPremiumActive" class="premium-lock">
+            <IconLock :size="10" color="#f0ad4e" />
+          </span>
+        </span>
         <span class="nav-label">AI Analysis</span>
       </button>
-      <button class="nav-item" @click="router.push('/profile')">
+      <button class="nav-item" @click="router.push('/home/profile')">
         <span class="nav-icon"><IconUser :size="20" /></span>
         <span class="nav-label">Profile</span>
       </button>
     </nav>
+
+    <!-- Premium Modal -->
+    <div v-if="showPremiumModal" class="premium-modal-overlay" @click="closePremiumModal">
+      <div class="premium-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Activated Premium</h3>
+        </div>
+        <div class="modal-body">
+          <p class="premium-desc">Unlock premium features:</p>
+          <ul class="premium-list">
+            <li>✨ AI-powered health analysis</li>
+            <li>✨ Personalized recommendations</li>
+            <li>✨ Advanced health insights</li>
+            <li>✨ Priority support</li>
+          </ul>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click="closePremiumModal">Cancel</button>
+            <button class="btn-purchase" @click="activatePremium">Purchase</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Snackbar -->
+    <div v-if="showSnackbar" class="snackbar">
+      {{ snackbarMessage }}
+    </div>
   </div>
 </template>
 
@@ -543,7 +597,7 @@ const handleMouseMove = (e) => {
   background-color: #ffffff;
   display: flex;
   justify-content: space-around;
-  padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)) 0;
+  padding: 16px 0 calc(16px + env(safe-area-inset-bottom, 0px)) 0;
   border-top: 1px solid #f0eae1;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
   z-index: 100;
@@ -554,11 +608,15 @@ const handleMouseMove = (e) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 10px;
   color: #888;
   cursor: pointer;
   position: relative;
-  padding: 4px 12px;
+  padding: 6px 12px;
+}
+.nav-item.is-premium {
+  background: #f5f5f5;
+  border-radius: 12px;
 }
 .nav-item::after {
   content: '';
@@ -574,6 +632,135 @@ const handleMouseMove = (e) => {
 }
 .nav-item.active { color: #5DC6BA; }
 .nav-item.active::after { width: 24px; }
-.nav-icon { font-size: 18px; }
+.nav-icon { font-size: 18px; position: relative; display: flex; align-items: center; justify-content: center; }
+.premium-lock {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: #fff8e1;
+  border-radius: 50%;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #f0ad4e;
+}
 .nav-label { font-size: 10px; font-weight: 500; }
+
+/* Premium Modal */
+.premium-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.premium-modal {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 340px;
+  overflow: hidden;
+}
+
+.premium-modal .modal-header {
+  background: linear-gradient(135deg, #5DC6BA 0%, #449284 100%);
+  padding: 20px;
+  text-align: center;
+}
+
+.premium-modal .modal-header h3 {
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  margin: 0;
+}
+
+.premium-modal .modal-body {
+  padding: 20px;
+}
+
+.premium-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.premium-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+}
+
+.premium-list li {
+  font-size: 13px;
+  color: #333;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.premium-list li:last-child {
+  border-bottom: none;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-cancel {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: white;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+}
+
+.btn-purchase {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0ad4e 0%, #f5c842 100%);
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+}
+
+/* Snackbar */
+.snackbar {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 1001;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
 </style>

@@ -16,7 +16,7 @@ import { RouterView } from 'vue-router'
 }
 
 html, body {
-  background-color: #e5e5e5;
+  background-color: #fcf8f2;
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
@@ -30,17 +30,12 @@ body {
   width: 100%;
   max-width: 600px;
   min-height: 100dvh;
-  min-height: 100vh;
+  height: 100dvh;
   margin: 0 auto;
   background-color: #fcf8f2;
   position: relative;
   overflow: hidden;
-}
-
-@supports (height: 100dvh) {
-  .phone-wrapper {
-    min-height: 100dvh;
-    height: 100dvh;
-  }
+  display: flex;
+  flex-direction: column;
 }
 </style>

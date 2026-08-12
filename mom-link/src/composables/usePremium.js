@@ -1,16 +1,23 @@
 import { ref } from 'vue'
 
+// Shared state - single source of truth across all components
 const isPremiumActive = ref(false)
 const showPremiumModal = ref(false)
+const showSnackbar = ref(false)
+const snackbarMessage = ref('')
 
 export function usePremium() {
-  const checkPremium = () => {
-    return localStorage.getItem('momlink_premium_active') === 'true'
-  }
-
   const activatePremium = () => {
     isPremiumActive.value = true
-    localStorage.setItem('momlink_premium_active', 'true')
+    showPremiumModal.value = false
+    snackbarMessage.value = 'Activated successful'
+    showSnackbar.value = true
+    setTimeout(() => {
+      showSnackbar.value = false
+    }, 3000)
+  }
+
+  const closePremiumModal = () => {
     showPremiumModal.value = false
   }
 
@@ -18,21 +25,13 @@ export function usePremium() {
     showPremiumModal.value = true
   }
 
-  const closePremiumModal = () => {
-    showPremiumModal.value = false
-  }
-
-  // Initialize from localStorage
-  if (typeof window !== 'undefined') {
-    isPremiumActive.value = checkPremium()
-  }
-
   return {
     isPremiumActive,
     showPremiumModal,
-    checkPremium,
+    showSnackbar,
+    snackbarMessage,
     activatePremium,
-    openPremiumModal,
     closePremiumModal,
+    openPremiumModal,
   }
 }
