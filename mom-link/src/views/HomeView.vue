@@ -226,37 +226,37 @@ const recommendations = computed(() => {
     recs.push('⚠️ Heart rate is abnormal - consult doctor')
   }
   if (temp > 38.0) {
-    recs.push('🌡️ Temperature is elevated - rest and monitor')
+    recs.push(' Temperature is elevated - rest and monitor')
   }
   if (temp > 38.5) {
-    recs.push('🚨 High fever detected - seek medical help')
+    recs.push(' High fever detected - seek medical help')
   }
   if (movement <= 2) {
-    recs.push('👶 Low fetal movement - drink cold water and rest')
+    recs.push(' Low fetal movement - drink cold water and rest')
   }
   if (movement === 0) {
-    recs.push('🚨 No movement detected - contact doctor immediately')
+    recs.push(' No movement detected - contact doctor immediately')
   }
   if (stress === 'High') {
-    recs.push('🧘 Try deep breathing exercises')
-    recs.push('☀️ Consider light meditation')
+    recs.push(' Try deep breathing exercises')
+    recs.push(' Consider light meditation')
   }
 
   // If all is well, give positive recommendations
   if (recs.length === 0) {
-    recs.push('✨ Everything looks great! Keep it up')
-    recs.push('💧 Drink 8 glasses of water today')
-    recs.push('🚶‍♀️ Light walk is good for you')
-    recs.push('🥗 Eat nutrient-rich foods')
-    recs.push('😴 Remember to get adequate rest')
-    recs.push('📋 Attend your scheduled checkups')
+    recs.push(' Everything looks great! Keep it up')
+    recs.push(' Drink 8 glasses of water today')
+    recs.push(' Light walk is good for you')
+    recs.push(' Eat nutrient-rich foods')
+    recs.push(' Remember to get adequate rest')
+    recs.push(' Attend your scheduled checkups')
     return recs
   }
 
   // Add general wellness tips alongside emergency ones
-  recs.push('💧 Stay hydrated - drink water regularly')
-  recs.push('🥗 Eat small, nutritious meals')
-  recs.push('😴 Get enough sleep (7-9 hours)')
+  recs.push(' Stay hydrated - drink water regularly')
+  recs.push(' Eat small, nutritious meals')
+  recs.push(' Get enough sleep (7-9 hours)')
 
   return recs.slice(0, 6) // Limit to 6 recommendations
 })
