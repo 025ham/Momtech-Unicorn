@@ -29,11 +29,18 @@ body {
 .phone-wrapper {
   width: 100%;
   max-width: 600px;
+  min-height: 100dvh;
   min-height: 100vh;
-  height: 100vh;
   margin: 0 auto;
   background-color: #fcf8f2;
   position: relative;
   overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  .phone-wrapper {
+    min-height: 100dvh;
+    height: 100dvh;
+  }
 }
 </style>

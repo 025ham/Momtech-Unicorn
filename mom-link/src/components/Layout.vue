@@ -53,7 +53,8 @@ const isActive = (path) => {
 .layout-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  min-height: 100dvh;
   width: 100%;
   overflow: hidden;
 }
@@ -63,6 +64,8 @@ const isActive = (path) => {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  /* Add padding at bottom for the nav bar */
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .layout-content::-webkit-scrollbar {
@@ -74,7 +77,7 @@ const isActive = (path) => {
   background-color: #ffffff;
   display: flex;
   justify-content: space-around;
-  padding: 12px 0 24px 0;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)) 0;
   border-top: 1px solid #f0eae1;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
   z-index: 100;
