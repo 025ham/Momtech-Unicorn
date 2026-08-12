@@ -213,7 +213,7 @@ const handleMouseMove = (e) => {
   height: auto;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: 110px;
+  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -534,14 +534,16 @@ const handleMouseMove = (e) => {
 
 /* Bottom Nav */
 .bottom-nav {
-  position: absolute;
+  position: fixed;
   bottom: 0;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
+  max-width: 600px;
   background-color: #ffffff;
   display: flex;
   justify-content: space-around;
-  padding: 12px 0 24px 0;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)) 0;
   border-top: 1px solid #f0eae1;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
   z-index: 100;

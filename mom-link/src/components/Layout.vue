@@ -65,7 +65,7 @@ const isActive = (path) => {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   /* Add padding at bottom for the nav bar */
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
 }
 
 .layout-content::-webkit-scrollbar {
@@ -73,7 +73,12 @@ const isActive = (path) => {
 }
 
 .bottom-nav {
-  flex-shrink: 0;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
   background-color: #ffffff;
   display: flex;
   justify-content: space-around;
@@ -81,6 +86,18 @@ const isActive = (path) => {
   border-top: 1px solid #f0eae1;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
   z-index: 100;
+}
+
+.layout-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+}
+
+.layout-content::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
