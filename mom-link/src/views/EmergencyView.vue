@@ -587,16 +587,14 @@ const handleMouseMove = (e) => {
 
 /* Bottom Nav */
 .bottom-nav {
-  position: fixed;
+  position: absolute;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   width: 100%;
-  max-width: 600px;
   background-color: #ffffff;
   display: flex;
   justify-content: space-around;
-  padding: 16px 0 16px 0;
+  padding: 12px 0 12px 0;
   border-top: 1px solid #f0eae1;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
   z-index: 100;

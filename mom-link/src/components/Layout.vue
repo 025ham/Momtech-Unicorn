@@ -119,12 +119,10 @@ const handleNavClick = (item) => {
 }
 
 .bottom-nav {
-  position: fixed;
+  position: absolute;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   width: 100%;
-  max-width: 600px;
   background-color: #ffffff;
   display: flex;
   justify-content: space-around;
