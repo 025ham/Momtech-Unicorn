@@ -24,21 +24,17 @@ html, body {
 
 body {
   margin: 0;
-  padding: 0;
   height: 100%;
 }
 
 .phone-wrapper {
   width: 100%;
-  max-width: 600px;
+  height: 100vh;
+  height: 100dvh;
   height: 100%;
   margin: 0 auto;
   background-color: #fcf8f2;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
