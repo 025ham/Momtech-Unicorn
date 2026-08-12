@@ -20,7 +20,7 @@ const healthStore = useHealthStore()
 const isEditing = ref(false)
 const editForm = ref({})
 
-const goBack = () => router.push('/')
+const goBack = () => router.push('/home')
 
 onMounted(async () => {
   // Set fallback user immediately so UI never shows "Loading..."

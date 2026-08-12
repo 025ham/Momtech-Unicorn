@@ -12,10 +12,10 @@ const router = useRouter()
 const isEmergencyPage = computed(() => route.path === '/emergency')
 
 const navItems = [
-  { path: '/', name: 'Home', icon: IconHome, iconColor: '#5DC6BA' },
-  { path: '/monitor', name: 'Monitor', icon: IconTrendUp, iconColor: '#5DC6BA' },
-  { path: '/ai-analysis', name: 'AI', icon: IconSmile, iconColor: '#5DC6BA' },
-  { path: '/profile', name: 'Profile', icon: IconUser, iconColor: '#5DC6BA' },
+  { path: '/home', name: 'Home', icon: IconHome, iconColor: '#5DC6BA' },
+  { path: '/home/monitor', name: 'Monitor', icon: IconTrendUp, iconColor: '#5DC6BA' },
+  { path: '/home/ai-analysis', name: 'AI', icon: IconSmile, iconColor: '#5DC6BA' },
+  { path: '/home/profile', name: 'Profile', icon: IconUser, iconColor: '#5DC6BA' },
 ]
 
 const isActive = (path) => {

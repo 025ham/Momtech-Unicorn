@@ -219,7 +219,7 @@ const healthScoreColor = computed(() => {
           <IconBell :size="20" :color="showNotifications ? '#5DC6BA' : '#000000'" />
           <span v-if="hasUnread" class="badge-dot"></span>
         </button>
-        <button class="icon-btn" @click="router.push('/profile')"><IconSettings :size="20" /></button>
+        <button class="icon-btn" @click="router.push('/home/profile')"><IconSettings :size="20" /></button>
       </div>
     </header>
 
@@ -357,9 +357,9 @@ const healthScoreColor = computed(() => {
     <section class="section-container">
       <h2 class="section-title">Quick Action</h2>
       <div class="action-grid">
-        <button class="act-btn btn-mint" @click="router.push('/monitor')"><span class="act-icon"><IconTrendUp :size="20" color="#00a86b" /></span> Live Monitor</button>
-        <button class="act-btn btn-purple" @click="router.push('/ai-analysis')"><span class="act-icon"><IconSmile :size="20" color="#6b5b95" /></span> AI Analysis</button>
-        <button class="act-btn btn-peach" @click="router.push('/health-report')"><span class="act-icon"><IconDocument :size="20" color="#d35400" /></span> Report</button>
+        <button class="act-btn btn-mint" @click="router.push('/home/monitor')"><span class="act-icon"><IconTrendUp :size="20" color="#00a86b" /></span> Live Monitor</button>
+        <button class="act-btn btn-purple" @click="router.push('/home/ai-analysis')"><span class="act-icon"><IconSmile :size="20" color="#6b5b95" /></span> AI Analysis</button>
+        <button class="act-btn btn-peach" @click="router.push('/home/health-report')"><span class="act-icon"><IconDocument :size="20" color="#d35400" /></span> Report</button>
         <button class="act-btn btn-rose text-danger" @click="router.push('/emergency')">
           <span class="act-icon"><IconWarning :size="20" color="#c0392b" /></span> Emergency
         </button>

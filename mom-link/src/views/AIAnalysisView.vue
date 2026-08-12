@@ -144,7 +144,7 @@ const aiSummary = computed(() => {
   <div class="ai-analysis-view">
     <!-- Top Nav -->
     <header class="app-header">
-      <button class="back-btn" @click="router.push('/')"><IconBack :size="18" /></button>
+      <button class="back-btn" @click="router.push('/home')"><IconBack :size="18" /></button>
       <h1>AI Analysis</h1>
       <div style="width: 24px;"></div>
     </header>

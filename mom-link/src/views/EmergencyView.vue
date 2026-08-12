@@ -21,7 +21,7 @@ const contactStore = useContactStore()
 const userStore = useUserStore()
 const notificationStore = useNotificationStore()
 
-const goBack = () => router.push('/')
+const goBack = () => router.push('/home')
 
 // Emergency state
 const sosActive = ref(false)
@@ -185,7 +185,7 @@ const handleMouseMove = (e) => {
 
     <!-- Bottom Nav-->
     <nav class="bottom-nav">
-      <button class="nav-item" @click="router.push('/')">
+      <button class="nav-item" @click="router.push('/home')">
         <span class="nav-icon"><IconHome :size="20" /></span>
         <span class="nav-label">Home</span>
       </button>

@@ -61,7 +61,7 @@ onMounted(async () => {
 })
 
 const goBack = () => {
-  router.push('/')
+  router.push('/home')
 }
 
 // Time filter - add 'day' option for more granular view

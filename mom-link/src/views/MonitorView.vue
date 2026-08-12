@@ -19,7 +19,7 @@ const healthStore = useHealthStore()
 const contactStore = useContactStore()
 const userStore = useUserStore()
 
-const goBack = () => router.push('/')
+const goBack = () => router.push('/home')
 
 // Share to Doctor modal
 const showShareModal = ref(false)
