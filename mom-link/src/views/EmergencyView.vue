@@ -267,7 +267,7 @@ const handleMouseMove = (e) => {
   height: auto;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 100px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -597,7 +597,7 @@ const handleMouseMove = (e) => {
   background-color: #ffffff;
   display: flex;
   justify-content: space-around;
-  padding: 16px 0 calc(16px + env(safe-area-inset-bottom, 0px)) 0;
+  padding: 16px 0 16px 0;
   border-top: 1px solid #f0eae1;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
   z-index: 100;
