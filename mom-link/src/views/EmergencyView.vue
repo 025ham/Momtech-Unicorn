@@ -267,6 +267,7 @@ const handleMouseMove = (e) => {
   height: 100%;
   overflow-y: auto;
   padding: 16px;
+  padding-bottom: 80px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -589,14 +590,14 @@ const handleMouseMove = (e) => {
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   width: 100%;
   max-width: 600px;
+  margin: 0 auto;
   background-color: #ffffff;
   display: flex;
   justify-content: space-around;
-  padding: 12px 0;
+  padding: 12px 0 12px 0;
   border-top: 1px solid #f0eae1;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
   z-index: 100;

@@ -29,9 +29,11 @@ body {
 
 .phone-wrapper {
   width: 100%;
+  max-width: 600px;
+  min-height: 100vh;
+  min-height: 100%;
   height: 100vh;
   height: 100dvh;
-  height: 100%;
   margin: 0 auto;
   background-color: #fcf8f2;
   position: relative;
