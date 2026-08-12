@@ -343,8 +343,8 @@ const refreshData = () => {
 
     <!-- Action Buttons -->
     <div class="action-row">
-      <button class="action-btn btn-refresh" @click="refreshData"><IconRefresh :size="16" /> Refresh</button>
-      <button class="action-btn btn-export" @click="openShareModal"><IconShare :size="16" /> Share to Doctor</button>
+      <button class="action-btn btn-refresh" @click="refreshData"><IconRefresh :size="16" /><span>Refresh</span></button>
+      <button class="action-btn btn-export" @click="openShareModal"><IconShare :size="16" /><span>Share to Doctor</span></button>
     </div>
   </div>
 </template>
@@ -550,6 +550,10 @@ const refreshData = () => {
   font-size: 13px;
   font-weight: bold;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 .btn-refresh { background-color: #fcdcdb; color: #333; }
 .btn-export { background-color: #afe1d1; color: #1a302a; }

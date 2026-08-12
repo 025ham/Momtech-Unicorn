@@ -693,8 +693,8 @@ const downloadPDF = () => {
         </div>
       </div>
       <div class="report-actions">
-        <button class="report-btn btn-download" @click="downloadPDF"><IconDownload :size="14" /> Download PDF</button>
-        <button class="report-btn btn-share" @click="openShareModal"><IconShare :size="14" /> Share to Doctor</button>
+        <button class="report-btn btn-download" @click="downloadPDF"><IconDownload :size="14" /><span>Download PDF</span></button>
+        <button class="report-btn btn-share" @click="openShareModal"><IconShare :size="14" /><span>Share to Doctor</span></button>
       </div>
     </section>
 
@@ -984,6 +984,10 @@ const downloadPDF = () => {
   font-size: 12px;
   font-weight: bold;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 .btn-download { background: #d6e2f9; color: #2b5c8f; }
 .btn-share { background: #d1ebd9; color: #2e6b5e; }

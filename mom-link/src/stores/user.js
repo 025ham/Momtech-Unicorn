@@ -14,22 +14,32 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true
     error.value = null
     try {
+      // Try to load from localStorage first
+      const savedUser = localStorage.getItem('momlink_demo_user')
+      if (savedUser) {
+        user.value = JSON.parse(savedUser)
+      }
+      // Then fetch from API to get latest
       const data = await api.getUser(id)
       user.value = data
+      // Save to localStorage for next time
+      localStorage.setItem('momlink_demo_user', JSON.stringify(data))
     } catch (err) {
       error.value = err.message
-      // fallback user
-      user.value = {
-        id: DEMO_USER_ID,
-        name: 'Sarah Johnson',
-        email: 'sarah@example.com',
-        age: 28,
-        pregnancy_week: 28,
-        due_date: '2024-10-15',
-        hospital: 'Bangkok Hospital',
-        doctor: 'Dr. Maria Chen',
-        blood_type: 'O+',
-        allergies: 'None',
+      // If we don't have saved user, use fallback
+      if (!user.value) {
+        user.value = {
+          id: DEMO_USER_ID,
+          name: 'Sarah Johnson',
+          email: 'sarah@example.com',
+          age: 28,
+          pregnancy_week: 28,
+          due_date: '2024-10-15',
+          hospital: 'Bangkok Hospital',
+          doctor: 'Dr. Maria Chen',
+          blood_type: 'O+',
+          allergies: 'None',
+        }
       }
     } finally {
       loading.value = false
