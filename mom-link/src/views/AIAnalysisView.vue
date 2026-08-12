@@ -10,8 +10,9 @@ const healthStore = useHealthStore()
 const userStore = useUserStore()
 
 onMounted(async () => {
+  // Don't fetchLatest - it would overwrite the simulation data from HomeView
+  // Just fetch stats and user data
   await Promise.all([
-    healthStore.fetchLatest(),
     healthStore.fetchStats(),
     userStore.fetchUser(),
   ])
@@ -42,6 +43,13 @@ const computedRisk = computed(() => {
 
 const riskLevel = computed(() => computedRisk.value.level)
 const riskLevelColor = computed(() => computedRisk.value.color)
+
+// Score color based on risk level
+const scoreColor = computed(() => {
+  if (riskLevel.value === 'High') return '#d9534f' // red
+  if (riskLevel.value === 'Medium') return '#e26d5c' // orange
+  return '#00bf72' // green
+})
 
 // Helper to determine status
 const getStatus = (type, value) => {
@@ -138,6 +146,35 @@ const aiSummary = computed(() => {
 
   return summary
 })
+
+// Health Score computation - same as HomeView
+const healthScore = computed(() => {
+  const latest = healthStore.latest
+  if (!latest || latest.heart_rate == null) return 0
+
+  const hr = latest.heart_rate || 0
+  const temp = latest.temperature || 36.5
+  const movement = latest.baby_movement ?? 10
+  const stress = latest.stress_level || 'Normal'
+
+  // Emergency thresholds
+  if (hr > EMERGENCY_HR || hr < 50 || temp > EMERGENCY_TEMP || temp < 35.5 || movement <= EMERGENCY_MOVEMENT || stress === 'High') {
+    return Math.floor(Math.random() * 20 + 15)
+  }
+
+  let score = 100
+
+  if (hr > EMERGENCY_HR) score -= (hr - EMERGENCY_HR) * 3
+  if (hr < 60) score -= (60 - hr) * 2
+  if (temp > 37.5) score -= (temp - 37.5) * 15
+  if (temp < 36.0) score -= (36.0 - temp) * 15
+  if (movement < 3) score -= (3 - movement) * 8
+  if (movement < 5) score -= (5 - movement) * 2
+  if (stress === 'High') score -= 25
+  else if (stress === 'Medium') score -= 10
+
+  return Math.max(15, Math.min(100, Math.floor(score)))
+})
 </script>
 
 <template>
@@ -152,9 +189,9 @@ const aiSummary = computed(() => {
     <!-- Health Score & Risk Gauge -->
     <section class="card score-risk-card">
       <div class="score-gauge-wrapper">
-        <div class="score-arc" :style="{ '--score': healthScore }">
+        <div class="score-arc" :style="{ '--score': healthScore, background: `linear-gradient(135deg, ${scoreColor}, ${scoreColor})` }">
           <div class="score-inner">
-            <span class="score-value">{{ healthScore }}%</span>
+            <span class="score-value" :style="{ color: scoreColor }">{{ healthScore }}%</span>
             <span class="score-label">Health Score</span>
           </div>
         </div>
@@ -205,6 +242,7 @@ const aiSummary = computed(() => {
   height: 100%;
   overflow-y: auto;
   padding: 16px;
+  padding-top: 80px;
   padding-bottom: 24px;
   display: flex;
   flex-direction: column;
@@ -213,17 +251,18 @@ const aiSummary = computed(() => {
 
 /* Header */
 .app-header {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: #d1ebd9;
   padding: 16px;
-  border-radius: 24px;
-  margin: -16px -16px 0 -16px;
-  position: sticky;
-  top: -16px;
   z-index: 10;
-  width: calc(100% + 32px);
   box-sizing: border-box;
 }
 .back-btn {

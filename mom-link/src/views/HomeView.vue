@@ -150,7 +150,7 @@ onUnmounted(() => {
 })
 const healthScore = computed(() => {
   const latest = healthStore.latest
-  if (!latest) return '--'
+  if (!latest || latest.heart_rate == null) return 0
 
   // Check for emergency conditions
   const hr = latest.heart_rate || 0
@@ -187,7 +187,7 @@ const healthScore = computed(() => {
 
 const healthScoreLabel = computed(() => {
   const score = healthScore.value
-  if (score === '--') return 'No Data'
+  if (score === 0) return 'No Data'
   if (score >= 90) return 'Excellent'
   if (score >= 75) return 'Good'
   if (score >= 60) return 'Fair'
@@ -201,6 +201,64 @@ const healthScoreColor = computed(() => {
   if (score >= 75) return '#00bf72'
   if (score >= 50) return '#e26d5c'
   return '#d9534f'
+})
+
+// Dynamic AI Recommendations based on health data and device status
+const recommendations = computed(() => {
+  const latest = healthStore.latest || {}
+  const device = deviceStore.activeDevice
+  const hr = latest.heart_rate || 0
+  const temp = latest.temperature || 36.5
+  const movement = latest.baby_movement ?? 10
+  const stress = latest.stress_level || 'Normal'
+
+  const recs = []
+
+  // Check if device is connected
+  if (!device) {
+    recs.push('🔗 Connect a device for real-time monitoring')
+    recs.push('📱 Pair your health devices in Bluetooth settings')
+    return recs
+  }
+
+  // Emergency recommendations
+  if (hr > 170 || hr < 50) {
+    recs.push('⚠️ Heart rate is abnormal - consult doctor')
+  }
+  if (temp > 38.0) {
+    recs.push('🌡️ Temperature is elevated - rest and monitor')
+  }
+  if (temp > 38.5) {
+    recs.push('🚨 High fever detected - seek medical help')
+  }
+  if (movement <= 2) {
+    recs.push('👶 Low fetal movement - drink cold water and rest')
+  }
+  if (movement === 0) {
+    recs.push('🚨 No movement detected - contact doctor immediately')
+  }
+  if (stress === 'High') {
+    recs.push('🧘 Try deep breathing exercises')
+    recs.push('☀️ Consider light meditation')
+  }
+
+  // If all is well, give positive recommendations
+  if (recs.length === 0) {
+    recs.push('✨ Everything looks great! Keep it up')
+    recs.push('💧 Drink 8 glasses of water today')
+    recs.push('🚶‍♀️ Light walk is good for you')
+    recs.push('🥗 Eat nutrient-rich foods')
+    recs.push('😴 Remember to get adequate rest')
+    recs.push('📋 Attend your scheduled checkups')
+    return recs
+  }
+
+  // Add general wellness tips alongside emergency ones
+  recs.push('💧 Stay hydrated - drink water regularly')
+  recs.push('🥗 Eat small, nutritious meals')
+  recs.push('😴 Get enough sleep (7-9 hours)')
+
+  return recs.slice(0, 6) // Limit to 6 recommendations
 })
 </script>
 
@@ -343,14 +401,7 @@ const healthScoreColor = computed(() => {
     <section class="recommendation-card">
       <h3>AI Recommendation</h3>
       <div class="rec-grid">
-        <div class="rec-item">• Drink more water</div>
-        <div class="rec-item">• Walk 20 mins</div>
-        <div class="rec-item">• Sleep 8 hours</div>
-        <div class="rec-item">• Visit doctor next week</div>
-        <div class="rec-item">• Eat more fruits</div>
-        <div class="rec-item">• Take prenatal vitamins</div>
-        <div class="rec-item">• Stay hydrated</div>
-        <div class="rec-item">• Rest adequately</div>
+        <div v-for="(rec, idx) in recommendations" :key="idx" class="rec-item">{{ rec }}</div>
       </div>
     </section>
 
@@ -374,6 +425,7 @@ const healthScoreColor = computed(() => {
   width: 100%;
   min-height: 100%;
   padding: 16px;
+  padding-top: 80px;
   padding-bottom: 24px;
   display: flex;
   flex-direction: column;
@@ -382,17 +434,18 @@ const healthScoreColor = computed(() => {
 
 /* Header */
 .app-header {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: #d1ebd9;
   padding: 16px;
-  border-radius: 24px;
-  margin: -16px -16px 0 -16px;
-  position: sticky;
-  top: -16px;
   z-index: 10;
-  width: calc(100% + 32px);
   box-sizing: border-box;
 }
 .user-profile {

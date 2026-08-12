@@ -180,7 +180,7 @@ const downloadCSV = () => {
     </section>
 
     <!-- Device Management -->
-    <section class="card device-card" @click="router.push('/bluetooth')">
+    <section class="card device-card" @click="router.push('/home/bluetooth')">
       <h3>Bluetooth Devices</h3>
       <div v-if="deviceStore.devices.length" class="device-list">
         <div v-for="device in deviceStore.devices" :key="device.id" class="device-item">
@@ -259,6 +259,7 @@ const downloadCSV = () => {
   height: auto;
   overflow-y: auto;
   padding: 16px;
+  padding-top: 80px;
   padding-bottom: 24px;
   display: flex;
   flex-direction: column;
@@ -266,17 +267,18 @@ const downloadCSV = () => {
 }
 
 .app-header {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: #d1ebd9;
   padding: 16px;
-  border-radius: 24px;
-  margin: -16px -16px 0 -16px;
-  position: sticky;
-  top: -16px;
   z-index: 10;
-  width: calc(100% + 32px);
   box-sizing: border-box;
 }
 .back-btn, .edit-btn { background: none; border: none; font-size: 16px; cursor: pointer; color: #333; }

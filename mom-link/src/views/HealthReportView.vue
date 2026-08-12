@@ -742,6 +742,7 @@ const downloadPDF = () => {
   min-height: 100vh;
   overflow-y: auto;
   padding: 16px;
+  padding-top: 80px;
   padding-bottom: 24px;
   display: flex;
   flex-direction: column;
@@ -750,17 +751,18 @@ const downloadPDF = () => {
 
 /* Header */
 .app-header {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: #d1ebd9;
   padding: 16px;
-  border-radius: 24px;
-  margin: -16px -16px 0 -16px;
-  position: sticky;
-  top: -16px;
   z-index: 10;
-  width: calc(100% + 32px);
   box-sizing: border-box;
 }
 .back-btn {
