@@ -112,7 +112,6 @@ const handleNavClick = (item) => {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 100px;
 }
 
 .layout-content::-webkit-scrollbar {

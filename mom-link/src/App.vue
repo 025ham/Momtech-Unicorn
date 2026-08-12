@@ -17,21 +17,21 @@ import { RouterView } from 'vue-router'
 
 html, body {
   background-color: #fcf8f2;
-  height: 100%;
+  height: 100vh;
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 body {
   margin: 0;
-  height: 100%;
+  height: 100vh;
 }
 
 .phone-wrapper {
   width: 100%;
   max-width: 600px;
-  height: 100%;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   margin: 0 auto;
   background-color: #fcf8f2;
   position: relative;
