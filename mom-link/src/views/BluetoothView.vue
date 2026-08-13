@@ -187,7 +187,7 @@ onMounted(() => {
   userStore.fetchUser().catch(() => {})
 })
 
-const goBack = () => router.push('/profile')
+const goBack = () => router.push('/home/profile')
 
 const selectDevice = async (id) => {
   try {

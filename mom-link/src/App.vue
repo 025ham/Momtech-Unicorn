@@ -16,6 +16,7 @@ import { RouterView } from 'vue-router'
 }
 
 html, body {
+  font-family: 'Kanit', sans-serif;
   background-color: #fcf8f2;
   height: 100%;
   width: 100%;
@@ -28,11 +29,7 @@ body {
 }
 
 .phone-wrapper {
-  width: 100%;
-  max-width: 600px;
-  min-height: 100vh;
-  min-height: 100%;
-  height: 100vh;
+  font-family: 'Kanit', sans-serif;
   height: 100dvh;
   margin: 0 auto;
   background-color: #fcf8f2;

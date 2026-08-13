@@ -104,7 +104,10 @@ const handleNavClick = (item) => {
   height: 100%;
   min-height: 100dvh;
   width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
   overflow: hidden;
+  position: relative;
 }
 
 .layout-content {
@@ -120,12 +123,13 @@ const handleNavClick = (item) => {
 }
 
 .bottom-nav {
-  position: fixed;
+  position: absolute;
   bottom: 0;
   left: 0;
-  width: 100%;
-  max-width: 600px;
+  right: 0;
   margin: 0 auto;
+  max-width: 600px;
+  width: 100%;
   background-color: #ffffff;
   display: flex;
   justify-content: space-around;
