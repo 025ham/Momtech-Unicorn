@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useContactStore } from '@/stores/contacts'
 import { useUserStore } from '@/stores/user'
@@ -16,6 +16,7 @@ import IconTrendUp from '@/components/icons/IconTrendUp.vue'
 import IconSmile from '@/components/icons/IconSmile.vue'
 import IconUser from '@/components/icons/IconUser.vue'
 import IconLock from '@/components/icons/IconLock.vue'
+import IconLocation from '@/components/icons/IconLocation.vue'
 import { usePremium } from '@/composables/usePremium'
 
 const router = useRouter()
@@ -75,6 +76,49 @@ const callHospital = () => {
   const hospitalPhone = '1669'
   window.location.href = `tel:${hospitalPhone}`
 }
+
+// Route modal
+const showRouteModal = ref(false)
+const selectedRoute = ref({ name: '', address: '', distance: '', eta: '', path: '' })
+
+const openRouteModal = (hospital) => {
+  selectedRoute.value = hospital
+  showRouteModal.value = true
+}
+const closeRouteModal = () => {
+  showRouteModal.value = false
+}
+
+// Different route paths for each hospital
+const routePaths = {
+  'Bangkok Hospital': {
+    path: 'M 10 30 L 50 30 L 50 15 L 120 15 L 120 25 L 190 25',
+    roads: [
+      'M 0 30 L 200 30', 'M 50 0 L 50 35', 'M 120 0 L 120 35', 'M 0 15 L 200 15', 'M 0 25 L 200 25'
+    ],
+    turns: [
+      { icon: '↱', text: 'Turn right onto Sukhumvit Rd' },
+      { icon: '↑', text: 'Continue straight 1.2 km' },
+      { icon: '↰', text: 'Turn left onto hospital access' }
+    ]
+  },
+  'Samitivej Hospital': {
+    path: 'M 10 20 L 70 20 L 70 35 L 140 35 L 140 10 L 190 10',
+    roads: [
+      'M 0 20 L 200 20', 'M 0 35 L 200 35', 'M 0 10 L 200 10', 'M 70 0 L 70 40', 'M 140 0 L 140 40'
+    ],
+    turns: [
+      { icon: '↳', text: 'Turn right onto Srinakarin Rd' },
+      { icon: '↑', text: 'Continue 2.5 km straight' },
+      { icon: '↰', text: 'Turn left at Pattanakarn intersection' },
+      { icon: '↱', text: 'Turn right into hospital parking' }
+    ]
+  }
+}
+
+const currentRoute = computed(() => {
+  return routePaths[selectedRoute.value.name] || routePaths['Bangkok Hospital']
+})
 
 // Premium handlers
 const handleAIPremiumClick = () => {
@@ -168,14 +212,20 @@ const handleMouseMove = (e) => {
             <span class="hospital-name">Bangkok Hospital</span>
             <span class="hospital-address">123 Sukhumvit Rd</span>
           </div>
-          <button class="call-btn" @click="callNumber('1669')"><IconPhone :size="16" /></button>
+          <div class="hospital-actions">
+            <button class="route-btn" @click="openRouteModal({ name: 'Bangkok Hospital', address: '123 Sukhumvit Rd', distance: '2.4 km', eta: '8 min' })"><IconLocation :size="16" color="white" /></button>
+            <button class="call-btn" @click="callNumber('1669')"><IconPhone :size="16" /></button>
+          </div>
         </div>
         <div class="hospital-item">
           <div class="hospital-info">
             <span class="hospital-name">Samitivej Hospital</span>
             <span class="hospital-address">456 Srinakarin Rd</span>
           </div>
-          <button class="call-btn" @click="callNumber('1669')"><IconPhone :size="16" /></button>
+          <div class="hospital-actions">
+            <button class="route-btn" @click="openRouteModal({ name: 'Samitivej Hospital', address: '456 Srinakarin Rd', distance: '5.1 km', eta: '15 min' })"><IconLocation :size="16" color="white" /></button>
+            <button class="call-btn" @click="callNumber('1669')"><IconPhone :size="16" /></button>
+          </div>
         </div>
       </div>
     </section>
@@ -252,6 +302,58 @@ const handleMouseMove = (e) => {
       </div>
     </div>
 
+    <!-- Route Modal -->
+    <div v-if="showRouteModal" class="route-modal-overlay" @click="closeRouteModal">
+      <div class="route-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Route to {{ selectedRoute.name }}</h3>
+          <button class="close-btn" @click="closeRouteModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="route-address">{{ selectedRoute.address }}</p>
+          <div class="route-info">
+            <div class="route-stat">
+              <span class="route-stat-val">{{ selectedRoute.distance }}</span>
+              <span class="route-stat-label">Distance</span>
+            </div>
+            <div class="route-stat">
+              <span class="route-stat-val">{{ selectedRoute.eta }}</span>
+              <span class="route-stat-label">Est. Time</span>
+            </div>
+          </div>
+          <!-- Mock map route visualization -->
+          <div class="route-map">
+            <svg class="route-map-svg" viewBox="0 0 200 50" preserveAspectRatio="xMidYMid meet">
+              <!-- Background roads -->
+              <g class="roads">
+                <line v-for="(road, i) in currentRoute.roads" :key="'road-'+i"
+                  :x1="road.split(' ')[1]" :y1="road.split(' ')[2]"
+                  :x2="road.split(' ')[4]" :y2="road.split(' ')[5]"
+                  stroke="#ddd" stroke-width="3"/>
+              </g>
+              <!-- Main route path -->
+              <path :d="currentRoute.path" stroke="#449284" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Route arrow -->
+              <polygon :points="currentRoute.name === 'Bangkok Hospital' ? '185,20 195,25 185,30' : '185,5 195,10 185,15'" fill="#449284"/>
+              <!-- Start point -->
+              <circle cx="10" :cy="currentRoute.name === 'Bangkok Hospital' ? 30 : 20" r="5" fill="#5DC6BA"/>
+              <!-- End point -->
+              <circle :cx="currentRoute.name === 'Bangkok Hospital' ? 190 : 190" :cy="currentRoute.name === 'Bangkok Hospital' ? 25 : 10" r="5" fill="#d9534f"/>
+            </svg>
+          </div>
+          <div class="route-meta">
+            <div class="route-turn" v-for="(turn, i) in currentRoute.turns" :key="i">
+              <span class="turn-icon">{{ turn.icon }}</span>
+              <span>{{ turn.text }}</span>
+            </div>
+          </div>
+          <button class="route-start-btn" @click="closeRouteModal">
+            <IconPhone :size="16" /> Start Navigation
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Snackbar -->
     <div v-if="showSnackbar" class="snackbar">
       {{ snackbarMessage }}
@@ -263,8 +365,10 @@ const handleMouseMove = (e) => {
 .emergency-view {
   background-color: #fcf8f2;
   width: 100%;
+  max-width: 600px;
   min-height: 100%;
   height: 100%;
+  margin: 0 auto;
   overflow-y: auto;
   padding: 16px;
   padding-bottom: 80px;
@@ -296,13 +400,13 @@ const handleMouseMove = (e) => {
   background: none;
   border: none;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   color: #333;
 }
 .app-header h1 {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 /* SOS Section */
@@ -340,7 +444,7 @@ const handleMouseMove = (e) => {
 .sos-icon { font-size: 32px; }
 .sos-text {
   font-size: 28px;
-  font-weight: bold;
+  font-weight: 600;
   margin: 4px 0;
 }
 .sos-sub {
@@ -357,7 +461,7 @@ const handleMouseMove = (e) => {
 }
 .card h3 {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
   margin-bottom: 12px;
 }
@@ -387,7 +491,7 @@ const handleMouseMove = (e) => {
 .map-icon { font-size: 32px; }
 .map-label {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
   color: #2e6b5e;
 }
 .map-distance {
@@ -416,7 +520,7 @@ const handleMouseMove = (e) => {
   background: #449284;
   color: white;
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -437,8 +541,20 @@ const handleMouseMove = (e) => {
 .hospital-name {
   display: block;
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
+}
+.hospital-actions { display: flex; gap: 8px; align-items: center; }
+.route-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: #5DC6BA;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .hospital-address {
   display: block;
@@ -452,7 +568,7 @@ const handleMouseMove = (e) => {
 .hospital-distance {
   display: block;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 600;
   color: #d9534f;
 }
 .hospital-time {
@@ -481,7 +597,7 @@ const handleMouseMove = (e) => {
 .contact-name {
   display: block;
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .contact-number {
@@ -545,7 +661,7 @@ const handleMouseMove = (e) => {
 
 .sos-alert-text {
   font-size: 72px;
-  font-weight: bold;
+  font-weight: 600;
   margin: 20px 0;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
@@ -566,7 +682,7 @@ const handleMouseMove = (e) => {
   border-radius: 50px;
   padding: 20px 40px;
   font-size: 20px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
@@ -581,7 +697,7 @@ const handleMouseMove = (e) => {
 .hospital-call-card h3 { text-align: center; margin-bottom: 12px; }
 .hospital-call-btn {
   width: 100%; background: #d9534f; color: white; border: none; border-radius: 16px;
-  padding: 16px; font-size: 16px; font-weight: bold; cursor: pointer;
+  padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
 .call-text { font-size: 11px; font-weight: normal; opacity: 0.9; }
@@ -590,7 +706,8 @@ const handleMouseMove = (e) => {
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
@@ -677,7 +794,7 @@ const handleMouseMove = (e) => {
 
 .premium-modal .modal-header h3 {
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
   color: white;
   margin: 0;
 }
@@ -736,6 +853,133 @@ const handleMouseMove = (e) => {
   font-weight: 600;
   color: white;
   cursor: pointer;
+}
+
+/* Route Modal */
+.route-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.route-modal {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 380px;
+  overflow: hidden;
+}
+.route-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+}
+.route-modal .modal-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+.route-modal .close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #888;
+}
+.route-modal .modal-body {
+  padding: 16px;
+}
+.route-address {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 12px;
+}
+.route-info {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.route-stat {
+  flex: 1;
+  background: #f0f7ff;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+}
+.route-stat-val {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2b5c8f;
+}
+.route-stat-label {
+  display: block;
+  font-size: 10px;
+  color: #888;
+  margin-top: 2px;
+}
+.route-map {
+  background: linear-gradient(135deg, #e8f4ea, #d6e8e0);
+  border-radius: 16px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.route-map-svg {
+  width: 100%;
+  height: 100%;
+}
+.route-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.route-turn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #555;
+}
+.turn-icon {
+  width: 24px;
+  height: 24px;
+  background: #f0f7ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #2b5c8f;
+}
+.route-start-btn {
+  width: 100%;
+  background: #5DC6BA;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 /* Snackbar */

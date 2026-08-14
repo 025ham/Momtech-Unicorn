@@ -508,29 +508,29 @@ const addEmergencyDevice = async () => {
   box-sizing: border-box;
 }
 .back-btn { background: none; border: none; font-size: 16px; cursor: pointer; color: #333; }
-.app-header h1 { font-size: 16px; font-weight: bold; }
+.app-header h1 { font-size: 16px; font-weight: 600; }
 
 .card { background: white; border-radius: 20px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.01); }
-.card h3 { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 10px; }
+.card h3 { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 10px; }
 
 .active-device { background: linear-gradient(135deg, #d1ebd9, #f0f7ff); }
 .active-info { display: flex; align-items: center; gap: 12px; }
 .device-icon-lg { font-size: 40px; }
 .device-details { flex: 1; }
-.device-name { display: block; font-size: 16px; font-weight: bold; color: #333; }
+.device-name { display: block; font-size: 16px; font-weight: 600; color: #333; }
 .device-type-label { font-size: 12px; color: #666; }
-.active-badge { background: #449284; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+.active-badge { background: #449284; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
 
 .scan-section { text-align: center; }
-.scan-btn { background: #2b5c8f; color: white; border: none; border-radius: 12px; padding: 14px 24px; font-size: 14px; font-weight: bold; cursor: pointer; width: 100%; }
+.scan-btn { background: #2b5c8f; color: white; border: none; border-radius: 12px; padding: 14px 24px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
 .scan-btn:disabled { opacity: 0.7; }
 .or-divider { text-align: center; color: #888; font-size: 12px; margin: 12px 0 8px; }
 .demo-devices { text-align: center; }
 .demo-label { font-size: 12px; color: #888; margin-bottom: 8px; }
 .demo-btns { display: flex; flex-direction: column; gap: 8px; }
-.demo-btn { background: #f0f7ff; border: 1px solid #d6e2f9; border-radius: 10px; padding: 10px 16px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+.demo-btn { background: #f0f7ff; border: 1px solid #d6e2f9; border-radius: 10px; padding: 10px 16px; font-size: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .demo-btn:hover { background: #d6e2f9; }
-.emergency-btn { background: #fcdcdb !important; border-color: #d9534f !important; color: #d9534f !important; font-weight: bold; }
+.emergency-btn { background: #fcdcdb !important; border-color: #d9534f !important; color: #d9534f !important; font-weight: 600; }
 .emergency-btn:hover { background: #f5c6c5 !important; }
 
 .devices-list { display: flex; flex-direction: column; gap: 10px; }
@@ -538,10 +538,10 @@ const addEmergencyDevice = async () => {
 .device-item.active { background: #d1ebd9; }
 .device-left { display: flex; align-items: center; gap: 10px; }
 .device-icon { font-size: 24px; }
-.device-name { display: block; font-size: 13px; font-weight: bold; color: #333; }
+.device-name { display: block; font-size: 13px; font-weight: 600; color: #333; }
 .device-type { display: block; font-size: 11px; color: #888; }
 .device-actions { display: flex; gap: 8px; align-items: center; }
-.select-btn { background: #449284; color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
+.select-btn { background: #449284; color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .delete-btn { background: none; border: none; cursor: pointer; font-size: 16px; }
 .no-devices { text-align: center; color: #888; font-size: 13px; padding: 20px; }
 
@@ -550,7 +550,7 @@ const addEmergencyDevice = async () => {
 .form-label span { color: #888; }
 .form-label input, .form-label select { border: 1px solid #ddd; border-radius: 8px; padding: 8px 10px; font-size: 13px; width: 60%; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
-.btn-cancel, .btn-add { border: none; border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: bold; cursor: pointer; }
+.btn-cancel, .btn-add { border: none; border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .btn-cancel { background: #eee; color: #666; }
 .btn-add { background: #449284; color: white; }
 
@@ -592,7 +592,7 @@ const addEmergencyDevice = async () => {
 
 .emergency-text {
   font-size: 48px;
-  font-weight: bold;
+  font-weight: 600;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
   margin: 20px 0;
   animation: pulse 0.5s infinite;
@@ -617,7 +617,7 @@ const addEmergencyDevice = async () => {
 
 .emergency-value {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   padding: 8px;
   border-radius: 8px;
   margin: 8px 0;
@@ -633,7 +633,7 @@ const addEmergencyDevice = async () => {
   border-radius: 50px;
   padding: 18px 40px;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   margin-bottom: 15px;

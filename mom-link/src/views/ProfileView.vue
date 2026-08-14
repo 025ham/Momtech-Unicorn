@@ -282,14 +282,14 @@ const downloadCSV = () => {
   box-sizing: border-box;
 }
 .back-btn, .edit-btn { background: none; border: none; font-size: 16px; cursor: pointer; color: #333; }
-.app-header h1 { font-size: 16px; font-weight: bold; }
+.app-header h1 { font-size: 16px; font-weight: 600; }
 
 .card { background: white; border-radius: 20px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.01); }
-.card h3 { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 10px; }
+.card h3 { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 10px; }
 
 .user-bio-card { display: flex; align-items: center; gap: 16px; }
 .user-avatar { font-size: 48px; }
-.user-name { font-size: 18px; font-weight: bold; color: #1a1a1a; }
+.user-name { font-size: 18px; font-weight: 600; color: #1a1a1a; }
 .user-sub { font-size: 13px; color: #555; margin-top: 4px; }
 
 .info-grid { display: flex; flex-direction: column; gap: 10px; }
@@ -302,14 +302,14 @@ const downloadCSV = () => {
 .form-label span { color: #888; }
 .form-label input { border: 1px solid #ddd; border-radius: 8px; padding: 6px 10px; font-size: 13px; width: 60%; }
 .edit-actions { display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end; }
-.btn-cancel, .btn-save { border: none; border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: bold; cursor: pointer; }
+.btn-cancel, .btn-save { border: none; border-radius: 10px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .btn-cancel { background: #eee; color: #666; }
 .btn-save { background: #449284; color: white; }
 .btn-save:disabled { opacity: 0.6; }
 
 .hospital-row { display: flex; align-items: center; gap: 12px; }
 .hospital-icon { font-size: 28px; }
-.hospital-name { display: block; font-size: 14px; font-weight: bold; color: #333; }
+.hospital-name { display: block; font-size: 14px; font-weight: 600; color: #333; }
 .doctor-name { display: block; font-size: 12px; color: #888; margin-top: 2px; }
 
 .device-card { cursor: pointer; }
@@ -317,16 +317,16 @@ const downloadCSV = () => {
 .device-item { display: flex; justify-content: space-between; align-items: center; }
 .device-left { display: flex; align-items: center; gap: 10px; }
 .device-icon { font-size: 24px; }
-.device-name { display: block; font-size: 13px; font-weight: bold; color: #333; }
+.device-name { display: block; font-size: 13px; font-weight: 600; color: #333; }
 .device-type { display: block; font-size: 11px; color: #888; }
-.device-status { font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 12px; }
+.device-status { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; }
 .device-status.connected { background: #d1ebd9; color: #2e6b5e; }
 .no-device { font-size: 13px; color: #888; text-align: center; padding: 10px; }
-.device-link-btn { width: 100%; background: #f0f7ff; border: none; border-radius: 10px; padding: 10px; font-size: 13px; font-weight: bold; color: #2b5c8f; cursor: pointer; margin-top: 8px; }
+.device-link-btn { width: 100%; background: #f0f7ff; border: none; border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 600; color: #2b5c8f; cursor: pointer; margin-top: 8px; }
 
 .export-card { text-align: center; }
 .export-desc { font-size: 12px; color: #888; margin-bottom: 10px; }
-.export-btn { background: #449284; color: white; border: none; border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; }
+.export-btn { background: #449284; color: white; border: none; border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; }
 
 /* Export Modal */
 .export-modal-overlay {
@@ -358,7 +358,7 @@ const downloadCSV = () => {
 }
 .modal-header h3 {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .close-btn {
@@ -417,7 +417,7 @@ const downloadCSV = () => {
   border-radius: 12px;
   padding: 12px;
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;

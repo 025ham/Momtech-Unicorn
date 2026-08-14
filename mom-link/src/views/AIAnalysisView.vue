@@ -269,13 +269,13 @@ const healthScore = computed(() => {
   background: none;
   border: none;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   color: #333;
 }
 .app-header h1 {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 /* Card Base */
@@ -287,7 +287,7 @@ const healthScore = computed(() => {
 }
 .card h3 {
   font-size: 15px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
   margin-bottom: 12px;
 }
@@ -326,7 +326,7 @@ const healthScore = computed(() => {
 }
 .score-value {
   font-size: 22px;
-  font-weight: bold;
+  font-weight: 600;
   color: #00bf72;
 }
 .score-label {
@@ -342,7 +342,7 @@ const healthScore = computed(() => {
 }
 .risk-label {
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .risk-bar-container {
@@ -364,7 +364,7 @@ const healthScore = computed(() => {
 }
 .risk-text {
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 600;
   min-width: 60px;
 }
 
@@ -395,12 +395,12 @@ const healthScore = computed(() => {
 }
 .pattern-name {
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .pattern-status {
   font-size: 10px;
-  font-weight: bold;
+  font-weight: 600;
   padding: 2px 8px;
   border-radius: 10px;
 }
@@ -410,7 +410,7 @@ const healthScore = computed(() => {
 
 .pattern-value {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
   margin-bottom: 8px;
 }

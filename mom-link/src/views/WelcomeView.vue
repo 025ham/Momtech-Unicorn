@@ -26,13 +26,13 @@ const getStarted = () => {
 
       <div class="features-preview">
         <div class="feature-item">
-          <span class="feature-text">| Track your health</span>
+          <span class="feature-text">|  Track your health</span>
         </div>
         <div class="feature-item">
-          <span class="feature-text">| Monitor baby movement</span>
+          <span class="feature-text">|  Monitor baby movement</span>
         </div>
         <div class="feature-item">
-          <span class="feature-text">| Share with doctor 24/7</span>
+          <span class="feature-text">|  Share with doctor 24/7</span>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ const getStarted = () => {
 
 .app-name {
   font-size: 32px;
-  font-weight: bold;
+  font-weight: 600;
   color: #2e6b5e;
   margin: 0;
 }
@@ -124,7 +124,7 @@ const getStarted = () => {
   border-radius: 50px;
   padding: 16px 48px;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(93, 198, 186, 0.4);
   transition: all 0.3s ease;

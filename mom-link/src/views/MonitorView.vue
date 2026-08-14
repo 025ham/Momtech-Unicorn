@@ -383,13 +383,13 @@ const refreshData = () => {
   background: none;
   border: none;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   color: #333;
 }
 .app-header h1 {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 /* Card Base */
@@ -401,7 +401,7 @@ const refreshData = () => {
 }
 .card h3 {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
   text-align: center;
   margin-bottom: 8px;
@@ -411,11 +411,11 @@ const refreshData = () => {
 .card-header {
   display: flex;
   justify-content: space-between;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 13px;
   margin-bottom: 10px;
 }
-.title { font-size: 13px; font-weight: bold; }
+.title { font-size: 13px; font-weight: 600; }
 .value { font-size: 14px; }
 .icon-red { color: #d9534f; }
 .graph-placeholder {
@@ -459,7 +459,7 @@ const refreshData = () => {
 .current-badge-text {
   font-size: 9px;
   fill: white;
-  font-weight: bold;
+  font-weight: 600;
   text-anchor: middle;
 }
 
@@ -485,7 +485,7 @@ const refreshData = () => {
   align-items: center;
   justify-content: center;
 }
-.progress-val { font-weight: bold; font-size: 20px; color: #333; }
+.progress-val { font-weight: 600; font-size: 20px; color: #333; }
 
 /* Timeline */
 .timeline-list {
@@ -502,7 +502,7 @@ const refreshData = () => {
   color: #888;
 }
 .time-txt{font-size: 17px;}
-.timeline-item.active { color: #2b5c8f; font-weight: bold; }
+.timeline-item.active { color: #2b5c8f; font-weight: 600; }
 .indicator-dot {
   width: 8px;
   height: 8px;
@@ -535,7 +535,7 @@ const refreshData = () => {
   align-items: flex-end;
   justify-content: center;
 }
-.gauge-text { font-size: 17px; font-weight: bold; margin-bottom: 2px; }
+.gauge-text { font-size: 17px; font-weight: 600; margin-bottom: 2px; }
 
 /* Action Buttons */
 .action-row {
@@ -549,7 +549,7 @@ const refreshData = () => {
   border-radius: 14px;
   padding: 12px;
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -589,7 +589,7 @@ const refreshData = () => {
 }
 .modal-header h3 {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .close-btn {
@@ -642,7 +642,7 @@ const refreshData = () => {
 }
 .doctor-name {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .doctor-phone {

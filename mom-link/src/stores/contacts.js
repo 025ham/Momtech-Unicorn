@@ -4,7 +4,11 @@ import { api } from '../api/index.js'
 import { useUserStore } from './user.js'
 
 export const useContactStore = defineStore('contacts', () => {
-  const contacts = ref([])
+  const contacts = ref([
+    { id: 1, name: 'Emergency Services', phone: '1669', contact_type: 'emergency' },
+    { id: 2, name: 'John (Husband)', phone: '081-234-5678', contact_type: 'personal' },
+    { id: 3, name: 'Dr. Maria Chen', phone: '089-123-4567', contact_type: 'doctor' },
+  ])
   const loading = ref(false)
   const error = ref(null)
 
@@ -14,14 +18,11 @@ export const useContactStore = defineStore('contacts', () => {
     error.value = null
     try {
       const data = await api.getContacts(userStore.user?.id || userStore.DEMO_USER_ID)
-      contacts.value = data
+      if (data && data.length > 0) {
+        contacts.value = data
+      }
     } catch (err) {
       error.value = err.message
-      contacts.value = [
-        { id: 1, name: 'Emergency Services', phone: '1669', contact_type: 'emergency' },
-        { id: 2, name: 'John (Husband)', phone: '081-234-5678', contact_type: 'personal' },
-        { id: 3, name: 'Dr. Maria Chen', phone: '089-123-4567', contact_type: 'doctor' },
-      ]
     } finally {
       loading.value = false
     }

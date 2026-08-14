@@ -458,7 +458,7 @@ const recommendations = computed(() => {
 }
 .user-text h1 {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   color: #1a1a1a;
 }
 .sub-text {
@@ -527,7 +527,7 @@ const recommendations = computed(() => {
 }
 .notification-header h3 {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .header-actions {
@@ -633,7 +633,7 @@ const recommendations = computed(() => {
 }
 .card-title {
   text-align: center;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 17px;
   color: #1a302a;
   margin-bottom: 12px;
@@ -667,7 +667,7 @@ const recommendations = computed(() => {
 }
 .p-value {
   font-size: 11px;
-  font-weight: bold;
+  font-weight: 600;
 }
 .status-active {
   color: #2e6b5e;
@@ -676,7 +676,7 @@ const recommendations = computed(() => {
 /* Sections */
 .section-title {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
   color: #1a1a1a;
   margin-bottom: 10px;
 }
@@ -717,11 +717,11 @@ const recommendations = computed(() => {
 .m-label {
   font-size: 15px;
   color: #333;
-  font-weight: bolder;
+  font-weight: 600;
 }
 .m-value {
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 600;
   color: #111;
   margin-top: 2px;
 }
@@ -749,7 +749,7 @@ const recommendations = computed(() => {
 .summary-card h3,
 .score-card h3 {
   font-size: 15px;
-  font-weight: bold;
+  font-weight: 600;
   margin-bottom: 8px;
 }
 .summary-card ul {
@@ -785,7 +785,7 @@ const recommendations = computed(() => {
 }
 .score-val {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   position: relative;
   bottom: -4px;
 }
@@ -808,7 +808,7 @@ const recommendations = computed(() => {
 }
 .recommendation-card h3 {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
   color: #1a1a1a;
   margin-bottom: 12px;
 }
@@ -845,7 +845,7 @@ const recommendations = computed(() => {
   border-radius: 16px;
   padding: 15px 7px;
   font-size: 10px;
-  font-weight: bold;
+  font-weight: 600;
   display: flex;
   flex-direction: column;
   align-items: center;

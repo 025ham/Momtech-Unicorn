@@ -414,12 +414,12 @@ const downloadPDF = () => {
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .info-item { display: flex; justify-content: space-between; padding: 5px 0; }
     .info-label { color: #666; }
-    .info-value { font-weight: bold; color: #333; }
+    .info-value { font-weight: 600; color: #333; }
     .section { margin-bottom: 30px; }
     .section h3 { color: #333; border-bottom: 2px solid #5DC6BA; padding-bottom: 10px; margin-bottom: 15px; }
     .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
     .stat-card { background: #f9f9f9; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #eee; }
-    .stat-value { font-size: 24px; font-weight: bold; color: #5DC6BA; }
+    .stat-value { font-size: 24px; font-weight: 600; color: #5DC6BA; }
     .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
     .log-table { width: 100%; border-collapse: collapse; }
     .log-table th { background: #5DC6BA; color: white; padding: 10px; text-align: left; }
@@ -769,13 +769,13 @@ const downloadPDF = () => {
   background: none;
   border: none;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   color: #333;
 }
 .app-header h1 {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 /* Filter */
@@ -902,7 +902,7 @@ const downloadPDF = () => {
 }
 .card h3 {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
   margin-bottom: 12px;
 }
@@ -916,7 +916,7 @@ const downloadPDF = () => {
 }
 .chart-title {
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .chart-unit {
@@ -962,7 +962,7 @@ const downloadPDF = () => {
 }
 .report-date {
   font-size: 11px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .report-doctor {
@@ -984,7 +984,7 @@ const downloadPDF = () => {
   border-radius: 12px;
   padding: 10px;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1024,7 +1024,7 @@ const downloadPDF = () => {
 }
 .modal-header h3 {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .close-btn {
@@ -1077,7 +1077,7 @@ const downloadPDF = () => {
 }
 .doctor-name {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
   color: #333;
 }
 .doctor-phone {
